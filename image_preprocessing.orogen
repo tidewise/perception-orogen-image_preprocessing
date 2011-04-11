@@ -1,0 +1,61 @@
+name "image_preprocessing"
+version "0.1"
+
+import_types_from "base"
+import_types_from "frame_helper/FrameHelperTypes.h"
+using_library "opencv"
+using_library "frame_helper"
+
+
+task_context "BaseTask" do
+   property("calibrate","bool",false) 
+
+   property("frame_mode", "/base/samples/frame/frame_mode_t", :MODE_RGB).
+       doc "output frame mode"
+ 
+   property("scale_x", "double", 1).
+       doc "scale factor for the x direction"
+
+   property("scale_y", "double" ,1).
+       doc "scale factor for the y direction"
+
+   property("offset_x",   "int", 0).
+       doc "the offset to be used on the left margin in case the of resizing widescreen images"
+
+   property("offset_y",   "int", 0).
+       doc "the offset to be used on the left margin in case the of resizing widescreen images"
+
+   property("data_depth",   "int", 1).
+       doc "output data depth in bytes"
+end
+
+task_context "MonoTask" do
+    subclasses "BaseTask"
+
+    input_port "frame", ro_ptr("/base/samples/frame/Frame")
+    output_port "oframe", ro_ptr("/base/samples/frame/Frame")
+    property("calibration","CalibrationParameters")
+    port_driven "frame"
+end
+
+task_context "StereoTask" do
+    subclasses "BaseTask"
+
+    input_port "frame_left", ro_ptr("/base/samples/frame/Frame")
+    input_port "frame_right", ro_ptr("/base/samples/frame/Frame")
+    output_port "oframe_pair", ro_ptr("/base/samples/frame/FramePair")
+    property("calibration_left","CalibrationParameters")
+    property("calibration_right","CalibrationParameters")
+    port_driven "frame_left","frame_right"
+end
+
+
+# Declares a deployment, i.e. an actual executable that contains various tasks.
+deployment "image_preprocessing_test" do
+    # This is a test deployment that should not be installed
+    do_not_install
+
+    task("mono_image_preprocessing", "MonoTask")
+    task("stereo_image_preprocessing", "StereoTask")
+end
+
