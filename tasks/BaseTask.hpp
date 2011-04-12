@@ -13,7 +13,7 @@ namespace image_preprocessing {
     {
 	friend class BaseTaskBase;
     protected:
-        FrameHelper frame_helper;
+        frame_helper::FrameHelper frame_helper;
         base::samples::frame::Frame temp_frame;
 
         double scale_x;
