@@ -37,7 +37,7 @@ bool BaseTask::startHook()
     calibrate = _calibrate.value();
     offset_x = _offset_x.value();
     offset_y = _offset_y.value();
-    data_depth = _data_depth.value();
+    resize_algorithm = _resize_algorithm.value();
 
     return true;
 }

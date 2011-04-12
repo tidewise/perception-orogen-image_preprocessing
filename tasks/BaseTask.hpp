@@ -22,7 +22,7 @@ namespace image_preprocessing {
         base::samples::frame::frame_mode_t frame_mode;
         int offset_x;
         int offset_y;
-        int data_depth;
+        ResizeAlgorithm resize_algorithm;
         CalibrationParameters calibration;
 
     public:

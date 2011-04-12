@@ -47,14 +47,19 @@ void MonoTask::updateHook()
     //read all new frames
     while(_frame.read(in_frame) == RTT::NewData)
     {
+        //set bayer mode to the right bayer pattern if not specified 
+        if(frame_mode == MODE_BAYER && in_frame->isBayer())
+            frame_mode = in_frame->getFrameMode();
+
         Frame* pout_frame = out_frame.write_access();
-        pout_frame->init((in_frame->getWidth()-offset_x)*scale_x,(in_frame->getHeight()-offset_y)*scale_y,data_depth,frame_mode,false);
-        frame_helper.convert(*in_frame,*pout_frame,offset_x,offset_y,INTER_LINEAR,calibrate);
+        pout_frame->init((in_frame->getWidth()-offset_x)*scale_x,
+                         (in_frame->getHeight()-offset_y)*scale_y,
+                         in_frame->getDataDepth(),frame_mode,false);
+        frame_helper.convert(*in_frame,*pout_frame,offset_x,offset_y,resize_algorithm,calibrate);
         out_frame.reset(pout_frame);
         _oframe.write(out_frame);
     }
 }
-
 
 // void MonoTask::errorHook()
 // {

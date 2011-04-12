@@ -1,21 +1,11 @@
 <package>
-  <description brief="dummy-brief-desc">
-  dummy-long-desc
+  <description brief="Orogen task for converting frames into an other foramt or to resize them.">
+  The package is based on fame_helper. 
   </description>
-  <author>dummy-author/dummy-email</author>
+  <author>Alexander.Duda/Alexander.Duda@dfki.de</author>
   <license>dummy-license</license>
   <url>dummy-url</url>
   <logo>dummy-logo-url</logo>
- <!--
-   To add any dependencies use the depend tag
-  <depend package="dummy-dependency-0" />
-	...
-  <depend package="dummy-dependency-n-1" />
-  <depend package="dummy-dependency-n" />
--->
-<!--DEPEND-ENTRY-->
+  <depend package="image_processing/frame_helper"/>
   <versioncontrol type="dummy-version-control" url="dummy-version-control-url" />
-  <export>
-    <cpp cflags="dummy-cflags" lflags="dummy-lflags" />
-  </export>
 </package>
