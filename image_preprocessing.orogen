@@ -13,7 +13,7 @@ task_context "BaseTask" do
    property("frame_mode", "/base/samples/frame/frame_mode_t", :MODE_BAYER).
        doc "output frame mode"
 
-   property("resize_algorithm","ResizeAlgorithm",:BAYER_RESIZE)
+   property("resize_algorithm","/frame_helper/ResizeAlgorithm",:BAYER_RESIZE)
  
    property("scale_x", "double", 0.5).
        doc "scale factor for the x direction"
@@ -33,7 +33,7 @@ task_context "MonoTask" do
 
     input_port "frame", ro_ptr("/base/samples/frame/Frame")
     output_port "oframe", ro_ptr("/base/samples/frame/Frame")
-    property("calibration","CalibrationParameters")
+    property("calibration","frame_helper/CalibrationParameters")
     port_driven "frame"
 end
 
@@ -43,8 +43,8 @@ task_context "StereoTask" do
     input_port "frame_left", ro_ptr("/base/samples/frame/Frame")
     input_port "frame_right", ro_ptr("/base/samples/frame/Frame")
     output_port "oframe_pair", ro_ptr("/base/samples/frame/FramePair")
-    property("calibration_left","CalibrationParameters")
-    property("calibration_right","CalibrationParameters")
+    property("calibration_left","/frame_helper/CalibrationParameters")
+    property("calibration_right","/frame_helper/CalibrationParameters")
     port_driven "frame_left","frame_right"
 end
 
