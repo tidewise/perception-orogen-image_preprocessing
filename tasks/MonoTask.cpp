@@ -33,10 +33,7 @@ bool MonoTask::startHook()
     if (! MonoTaskBase::startHook())
         return false;
     
-    //TODO
-    //calc calibration matrix
-    //from scale factors
-    frame_helper.setCalibrationParameters(calibration);
+    frame_helper.setCalibrationParameter(_calibration.value());
     return true;
 }
 
@@ -53,8 +50,8 @@ void MonoTask::updateHook()
 
         Frame* pout_frame = out_frame.write_access();
         pout_frame->init((in_frame->getWidth()-offset_x)*scale_x,
-                         (in_frame->getHeight()-offset_y)*scale_y,
-                         in_frame->getDataDepth(),frame_mode,false);
+                (in_frame->getHeight()-offset_y)*scale_y,
+                in_frame->getDataDepth(),frame_mode,false);
         frame_helper.convert(*in_frame,*pout_frame,offset_x,offset_y,resize_algorithm,calibrate);
         out_frame.reset(pout_frame);
         _oframe.write(out_frame);

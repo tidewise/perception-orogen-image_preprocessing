@@ -23,7 +23,7 @@ namespace image_preprocessing {
         int offset_x;
         int offset_y;
         frame_helper::ResizeAlgorithm resize_algorithm;
-        frame_helper::CalibrationParameters calibration;
+        frame_helper::CalibrationParameterMono calibration;
 
     public:
         BaseTask(std::string const& name = "image_preprocessing::BaseTask", TaskCore::TaskState initial_state = Stopped);
