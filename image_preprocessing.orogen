@@ -2,10 +2,10 @@ name "image_preprocessing"
 version "0.1"
 
 import_types_from "base"
-import_types_from "frame_helper/FrameHelperTypes.h"
 using_library "opencv"
-using_library "frame_helper"
 
+using_library "frame_helper"
+import_types_from "frame_helper/FrameHelperTypes.h"
 
 task_context "BaseTask" do
    property("calibrate","bool",false)
