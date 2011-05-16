@@ -3,6 +3,7 @@
 #ifndef IMAGE_PREPROCESSING_BASETASK_TASK_HPP
 #define IMAGE_PREPROCESSING_BASETASK_TASK_HPP
 
+#include <stddef.h>
 #include <cv.h>
 #include "image_preprocessing/BaseTaskBase.hpp"
 #include "frame_helper/FrameHelper.h"
