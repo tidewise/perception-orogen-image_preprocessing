@@ -28,6 +28,7 @@ namespace image_preprocessing {
 
     public:
         BaseTask(std::string const& name = "image_preprocessing::BaseTask", TaskCore::TaskState initial_state = Stopped);
+        BaseTask(std::string const& name, RTT::ExecutionEngine* engine, TaskCore::TaskState initial_state = Stopped);
 
 	~BaseTask();
 
