@@ -11,6 +11,8 @@ namespace image_preprocessing {
 	friend class StereoTaskBase;
     protected:
 
+//        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> in_frame_left;
+        RTT::extras::ReadOnlyPointer<base::samples::frame::FramePair> out_frame_pair;
 
 
     public:
@@ -38,7 +40,7 @@ namespace image_preprocessing {
          * stay in Stopped. Otherwise, it goes into Running and updateHook()
          * will be called.
          */
-        // bool startHook();
+        bool startHook();
 
         /** This hook is called by Orocos when the component is in the Running
          * state, at each activity step. Here, the activity gives the "ticks"
@@ -54,7 +56,7 @@ namespace image_preprocessing {
          * component is stopped and recover() needs to be called before starting
          * it again. Finally, FatalError cannot be recovered.
          */
-        // void updateHook();
+        void updateHook();
 
         /** This hook is called by Orocos when the component is in the
          * RunTimeError state, at each activity step. See the discussion in

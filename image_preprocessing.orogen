@@ -58,3 +58,6 @@ deployment "image_preprocessing_test" do
     task("stereo_image_preprocessing", "StereoTask")
 end
 
+deployment "stereo_image_preprocessing" do
+    task("stereo_image_preprocessing", "StereoTask")
+end
