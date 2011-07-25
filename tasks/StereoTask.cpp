@@ -63,10 +63,10 @@ void StereoTask::updateHook()
 
 //          std::cerr << "timestamps match, writing FramePair ... ";
             pout_frame_pair->first.init((left_frame->getWidth()-offset_x)*scale_x, (left_frame->getHeight()-offset_y)*scale_y, left_frame->getDataDepth(), frame_mode, false);
-            frame_helper.setCalibrationParameter(_calibration_left.value());
+            frame_helper.setCalibrationParameter(_calibration.value().camLeft);
             frame_helper.convert(*left_frame, pout_frame_pair->first, offset_x, offset_y, resize_algorithm, calibrate);
             pout_frame_pair->second.init((right_frame->getWidth()-offset_x)*scale_x, (right_frame->getHeight()-offset_y)*scale_y, right_frame->getDataDepth(), frame_mode, false);
-            frame_helper.setCalibrationParameter(_calibration_right.value());
+            frame_helper.setCalibrationParameter(_calibration.value().camRight);
             frame_helper.convert(*right_frame, pout_frame_pair->second, offset_x, offset_y, resize_algorithm, calibrate);
             out_frame_pair.reset(pout_frame_pair);
             _oframe_pair.write(out_frame_pair);

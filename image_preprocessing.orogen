@@ -5,6 +5,7 @@ import_types_from "base"
 using_library "opencv"
 
 using_library "frame_helper"
+import_types_from "frame_helper/Calibration.h"
 import_types_from "frame_helper/FrameHelperTypes.h"
 
 task_context "BaseTask" do
@@ -33,7 +34,7 @@ task_context "MonoTask" do
 
     input_port "frame", ro_ptr("/base/samples/frame/Frame")
     output_port "oframe", ro_ptr("/base/samples/frame/Frame")
-    property("calibration","frame_helper/CalibrationParameters")
+    property("calibration","frame_helper/CameraCalibration")
     port_driven "frame"
 end
 
@@ -43,8 +44,7 @@ task_context "StereoTask" do
     input_port "frame_left", ro_ptr("/base/samples/frame/Frame")
     input_port "frame_right", ro_ptr("/base/samples/frame/Frame")
     output_port "oframe_pair", ro_ptr("/base/samples/frame/FramePair")
-    property("calibration_left","/frame_helper/CalibrationParameters")
-    property("calibration_right","/frame_helper/CalibrationParameters")
+    property("calibration","/frame_helper/StereoCalibration")
     port_driven "frame_left","frame_right"
 end
 
