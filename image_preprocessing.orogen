@@ -1,8 +1,9 @@
 name "image_preprocessing"
 version "0.1"
 
-import_types_from "base"
+using_library "base-types"
 using_library "opencv"
+import_types_from "base"
 
 using_library "frame_helper"
 import_types_from "frame_helper/Calibration.h"

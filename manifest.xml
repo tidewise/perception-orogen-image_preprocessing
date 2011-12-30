@@ -6,6 +6,7 @@
   <license>dummy-license</license>
   <url>dummy-url</url>
   <logo>dummy-logo-url</logo>
+  <depend package="base/types"/>
   <depend package="image_processing/frame_helper"/>
   <versioncontrol type="dummy-version-control" url="dummy-version-control-url" />
 </package>
