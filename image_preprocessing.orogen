@@ -30,6 +30,22 @@ task_context "BaseTask" do
        doc "the offset to be used on the left margin in case the of resizing widescreen images"
 end
 
+task_context "DepthImage2Pointcloud" do
+    input_port("color_frame", ro_ptr("/base/samples/frame/Frame")).
+        doc("Color Frame for DepthImage if availible")
+
+    input_port "frame", ro_ptr("/base/samples/DistanceImage")
+    output_port "pointcloud", "/base/samples/Pointcloud"
+
+    port_driven 
+
+    stream_aligner do
+        max_latency 0.1
+        align_port "color_frame",0.3
+        align_port "frame",0.3
+    end
+end
+
 task_context "MonoTask" do
     subclasses "BaseTask"
 

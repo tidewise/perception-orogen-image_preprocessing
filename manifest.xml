@@ -8,5 +8,6 @@
   <logo>dummy-logo-url</logo>
   <depend package="base/types"/>
   <depend package="image_processing/frame_helper"/>
+  <depend package="drivers/orogen/aggregator" />
   <versioncontrol type="dummy-version-control" url="dummy-version-control-url" />
 </package>
