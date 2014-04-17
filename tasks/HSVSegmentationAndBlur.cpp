@@ -75,7 +75,7 @@ void HSVSegmentationAndBlur::updateHook()
          pv_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false);
          
          //Todo check weher this is neede
-         phsv_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_BGR,false);
+         phsv_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_RGB,false);
          frame_helper.convertColor(*in_frame,*phsv_frame);
          //TODO save copieing twice
          //frame_helper.convertColor(*in_frame,*pout_frame);
