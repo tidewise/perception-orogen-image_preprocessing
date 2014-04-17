@@ -55,6 +55,26 @@ task_context "MonoTask" do
     port_driven "frame"
 end
 
+task_context "HSVSegmentationAndBlur" do
+
+    input_port "frame", ro_ptr("/base/samples/frame/Frame")
+    output_port "oframe", ro_ptr("/base/samples/frame/Frame")
+
+    output_port "hDebug", ro_ptr("/base/samples/frame/Frame")
+    output_port "vDebug", ro_ptr("/base/samples/frame/Frame")
+    output_port "sDebug", ro_ptr("/base/samples/frame/Frame")
+    property("hMin","int",0)
+    property("hMax","int",255)
+    property("vMin","int",0)
+    property("sMax","int",255)
+    property("sMin","int",0)
+    property("vMax","int",255)
+    property("blur","int",0)
+    property("unsetValue","int",0)
+    port_driven "frame"
+
+end
+
 task_context "StereoTask" do
     subclasses "BaseTask"
 
