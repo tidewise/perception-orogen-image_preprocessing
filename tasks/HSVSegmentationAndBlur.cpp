@@ -43,11 +43,13 @@ bool HSVSegmentationAndBlur::startHook()
     base::samples::frame::Frame* ps_frame = new base::samples::frame::Frame();
     base::samples::frame::Frame* pv_frame = new base::samples::frame::Frame();
     base::samples::frame::Frame* phsv_frame = new base::samples::frame::Frame();
+    base::samples::frame::Frame* phsv_v_frame = new base::samples::frame::Frame();
     base::samples::frame::Frame* org = new base::samples::frame::Frame();
     h_frame.reset(ph_frame);
     s_frame.reset(ps_frame);
     v_frame.reset(pv_frame);
     hsv_frame.reset(phsv_frame);
+    hsv_v_frame.reset(phsv_v_frame);
     out_frame.reset(org);
     
     
@@ -58,16 +60,17 @@ void HSVSegmentationAndBlur::updateHook()
     HSVSegmentationAndBlurBase::updateHook();
     frame_helper::FrameHelper frame_helper;
     
-     while(_frame.read(in_frame) == RTT::NewData)
+     while(_frame.read(in_frame) != RTT::NewData)
      {
          base::samples::frame::Frame* pout_frame = out_frame.write_access();
          base::samples::frame::Frame* ph_frame = h_frame.write_access();
          base::samples::frame::Frame* ps_frame = s_frame.write_access();
          base::samples::frame::Frame* pv_frame = v_frame.write_access();
          base::samples::frame::Frame* phsv_frame = hsv_frame.write_access();
+         base::samples::frame::Frame* phsv_v_frame = hsv_v_frame.write_access();
          if(!pout_frame){
              std::cerr << "Warning could not acquire write access" << std::endl;
-             continue;
+             return;
         }
         pout_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_RGB,false);
          ph_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false);
@@ -75,7 +78,8 @@ void HSVSegmentationAndBlur::updateHook()
          pv_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false);
          
          //Todo check weher this is neede
-         phsv_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_RGB,false);
+         phsv_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_BGR,false);
+         phsv_v_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false);
          frame_helper.convertColor(*in_frame,*phsv_frame);
          //TODO save copieing twice
          //frame_helper.convertColor(*in_frame,*pout_frame);
@@ -92,6 +96,38 @@ void HSVSegmentationAndBlur::updateHook()
          IplImage *s_plane = cvCreateImage(cvGetSize(&hsv), 8, 1);
          IplImage *v_plane = cvCreateImage(cvGetSize(&hsv), 8, 1);
          cvCvtPixToPlane(&hsv, h_plane, s_plane, v_plane, 0);
+         
+         //Calculate current v-lighting's disturbtion
+         double upper_lighting=0;
+         double lower_lighting=0;
+         uint64_t num_pixel=0;
+         for(size_t x= 0; x < v_plane->width;x++){
+            assert(v_plane->height > 30);
+            for(size_t y= 0; y < 30 ;y++){
+                size_t pos = x+(y*v_plane->width);
+                upper_lighting += v_plane->imageData[pos];
+                num_pixel++;
+            }
+            for(size_t y= v_plane->height-30; y < v_plane->height;y++){
+                size_t pos = x+(y*v_plane->width);
+                lower_lighting += v_plane->imageData[pos];
+            }
+         }
+         double correction = (double)upper_lighting-lower_lighting;
+         correction /= num_pixel*v_plane->height;
+         printf("Correctoin factor: %f (%lu,%lu)\n",correction,upper_lighting,lower_lighting);
+         
+         for(size_t x= 0; x < v_plane->width;x++){
+            for(size_t y= 0; y < 30 ;y++){
+                size_t pos = x+(y*v_plane->width);
+                v_plane->imageData[pos]+=correction*y;
+            }
+         }
+         
+         frame_helper::FrameHelper::copyMatToFrame(v_plane,*phsv_v_frame);
+         hsv_v_frame.reset(phsv_v_frame);
+         _hsv_v_frame.write(hsv_v_frame);
+         
          
          cvThreshold(h_plane, h_plane, _hMax, 255, CV_THRESH_TOZERO_INV);
          cvThreshold(h_plane, h_plane, _hMin, 255, CV_THRESH_BINARY);
@@ -113,7 +149,12 @@ void HSVSegmentationAndBlur::updateHook()
          _vDebug.write(v_frame);
          
          
+         size_t v_pixel_count = 0;
          for(size_t i= 0; i < v_plane->imageSize;i++){
+             if(v_plane->imageData[i])
+             {
+                v_pixel_count++;
+             }
              bool isset = h_plane->imageData[i] && s_plane->imageData[i] && v_plane->imageData[i];
              if(!isset){
                 org->imageData[(i*3)] = _unsetValue;
@@ -123,6 +164,15 @@ void HSVSegmentationAndBlur::updateHook()
          }
          if(_blur > 1 && _blur < org->width/2){
             cvSmooth(org,org,CV_BLUR,_blur,_blur);
+         }
+         if(_target_pixel_s.get() > 0)
+         {
+            if(v_pixel_count < _target_pixel_s){
+                _vMax.set(_vMax.get()+_steps_per_frame.get());
+            }
+            if(v_pixel_count > _target_pixel_s){
+                _vMax.set(_vMax.get()-_steps_per_frame.get());
+            }
          }
          
          frame_helper::FrameHelper::copyMatToFrame(org,*pout_frame);
