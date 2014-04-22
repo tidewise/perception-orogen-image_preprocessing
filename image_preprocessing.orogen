@@ -73,6 +73,12 @@ task_context "HSVSegmentationAndBlur" do
     property("blur","int",0)
     property("unsetValue","int",0)
 
+    property("minVadapt","int",110)
+        .doc("minumum adaptation for V value")
+    
+    property("maxVadapt","int",140)
+        .doc("minumum adaptation for V value")
+    
     property("target_pixel_s","int",100)
     property("steps_per_frame","int",1)
     port_driven "frame"

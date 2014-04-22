@@ -173,6 +173,12 @@ void HSVSegmentationAndBlur::updateHook()
             if(v_pixel_count > _target_pixel_s){
                 _vMax.set(_vMax.get()-_steps_per_frame.get());
             }
+            if(_maxVadapt.get() < _vMax.get()){
+                _vMax.set(_maxVadapt.get());
+            }
+            if(_minVadapt.get() > _vMax.get()){
+                _vMax.set(_minVadapt.get());
+            }
          }
          
          frame_helper::FrameHelper::copyMatToFrame(org,*pout_frame);
