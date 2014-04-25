@@ -60,7 +60,7 @@ void HSVSegmentationAndBlur::updateHook()
     HSVSegmentationAndBlurBase::updateHook();
     frame_helper::FrameHelper frame_helper;
     
-     while(_frame.read(in_frame) != RTT::NewData)
+     if(_frame.read(in_frame,true) == RTT::NewData)
      {
          base::samples::frame::Frame* pout_frame = out_frame.write_access();
          base::samples::frame::Frame* ph_frame = h_frame.write_access();
