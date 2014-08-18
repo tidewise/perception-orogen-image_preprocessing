@@ -1,0 +1,25 @@
+--- name:default
+# no documentation available for this property
+blur: 0
+# no documentation available for this property
+hMax: 255
+# no documentation available for this property
+hMin: 0
+# minumum adaptation for V value
+maxVadapt: 255 
+# minumum adaptation for V value
+minVadapt: 0 
+# no documentation available for this property
+sMax: 255
+# no documentation available for this property
+sMin: 0
+# no documentation available for this property
+steps_per_frame: 0 
+# no documentation available for this property
+target_pixel_s: 100
+# no documentation available for this property
+unsetValue: 0
+# no documentation available for this property
+vMax: 255
+# no documentation available for this property
+vMin: 0

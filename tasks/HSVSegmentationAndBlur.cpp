@@ -11,11 +11,13 @@ using namespace image_preprocessing;
 HSVSegmentationAndBlur::HSVSegmentationAndBlur(std::string const& name, TaskCore::TaskState initial_state)
     : HSVSegmentationAndBlurBase(name, initial_state)
 {
+    init();
 }
 
 HSVSegmentationAndBlur::HSVSegmentationAndBlur(std::string const& name, RTT::ExecutionEngine* engine, TaskCore::TaskState initial_state)
     : HSVSegmentationAndBlurBase(name, engine, initial_state)
 {
+    init();
 }
 
 HSVSegmentationAndBlur::~HSVSegmentationAndBlur()
@@ -23,6 +25,23 @@ HSVSegmentationAndBlur::~HSVSegmentationAndBlur()
 }
 
 
+void HSVSegmentationAndBlur::init(){
+    base::samples::frame::Frame* pout_frame = new base::samples::frame::Frame();
+    base::samples::frame::Frame* ph_frame = new base::samples::frame::Frame();
+    base::samples::frame::Frame* ps_frame = new base::samples::frame::Frame();
+    base::samples::frame::Frame* pv_frame = new base::samples::frame::Frame();
+    base::samples::frame::Frame* phsv_frame = new base::samples::frame::Frame();
+    base::samples::frame::Frame* phsv_v_frame = new base::samples::frame::Frame();
+    base::samples::frame::Frame* org = new base::samples::frame::Frame();
+    base::samples::frame::Frame* bin = new base::samples::frame::Frame();
+    h_frame.reset(ph_frame);
+    s_frame.reset(ps_frame);
+    v_frame.reset(pv_frame);
+    hsv_frame.reset(phsv_frame);
+    hsv_v_frame.reset(phsv_v_frame);
+    out_frame.reset(org);
+    binary.reset(bin);
+}
 
 /// The following lines are template definitions for the various state machine
 // hooks defined by Orocos::RTT. See HSVSegmentationAndBlur.hpp for more detailed
@@ -38,19 +57,6 @@ bool HSVSegmentationAndBlur::startHook()
 {
     if (! HSVSegmentationAndBlurBase::startHook())
         return false;
-    base::samples::frame::Frame* pout_frame = new base::samples::frame::Frame();
-    base::samples::frame::Frame* ph_frame = new base::samples::frame::Frame();
-    base::samples::frame::Frame* ps_frame = new base::samples::frame::Frame();
-    base::samples::frame::Frame* pv_frame = new base::samples::frame::Frame();
-    base::samples::frame::Frame* phsv_frame = new base::samples::frame::Frame();
-    base::samples::frame::Frame* phsv_v_frame = new base::samples::frame::Frame();
-    base::samples::frame::Frame* org = new base::samples::frame::Frame();
-    h_frame.reset(ph_frame);
-    s_frame.reset(ps_frame);
-    v_frame.reset(pv_frame);
-    hsv_frame.reset(phsv_frame);
-    hsv_v_frame.reset(phsv_v_frame);
-    out_frame.reset(org);
     
     
     return true;
@@ -68,6 +74,8 @@ void HSVSegmentationAndBlur::updateHook()
          base::samples::frame::Frame* pv_frame = v_frame.write_access();
          base::samples::frame::Frame* phsv_frame = hsv_frame.write_access();
          base::samples::frame::Frame* phsv_v_frame = hsv_v_frame.write_access();
+         base::samples::frame::Frame* binary = this->binary.write_access();
+
          if(!pout_frame){
              std::cerr << "Warning could not acquire write access" << std::endl;
              return;
@@ -76,6 +84,7 @@ void HSVSegmentationAndBlur::updateHook()
          ph_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false);
          ps_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false);
          pv_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false);
+         binary->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false); //We have no binary image so far
          
          //Todo check weher this is neede
          phsv_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_BGR,false);
@@ -86,6 +95,7 @@ void HSVSegmentationAndBlur::updateHook()
          IplImage hsv(frame_helper::FrameHelper::convertToCvMat(*phsv_frame));
          //IplImage org(frame_helper::FrameHelper::convertToCvMat(*pout_frame));
          IplImage *org = cvCreateImage(cvGetSize(&hsv),hsv.depth,hsv.nChannels);
+         IplImage *bin= cvCreateImage(cvGetSize(&hsv), IPL_DEPTH_8U,1);
          cvCopy(&hsv,org,0);
          
          
@@ -156,6 +166,7 @@ void HSVSegmentationAndBlur::updateHook()
                 v_pixel_count++;
              }
              bool isset = h_plane->imageData[i] && s_plane->imageData[i] && v_plane->imageData[i];
+             bin->imageData[i] = isset?255:0;
              if(!isset){
                 org->imageData[(i*3)] = _unsetValue;
                 org->imageData[(i*3)+1] =  _unsetValue;
@@ -182,8 +193,11 @@ void HSVSegmentationAndBlur::updateHook()
          }
          
          frame_helper::FrameHelper::copyMatToFrame(org,*pout_frame);
+         frame_helper::FrameHelper::copyMatToFrame(bin,*binary);
+         this->binary.reset(binary);
          out_frame.reset(pout_frame);
          _oframe.write(out_frame);
+         _binary_result.write(this->binary);
          
          
          hsv_frame.reset(phsv_frame);

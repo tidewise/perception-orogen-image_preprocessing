@@ -33,6 +33,8 @@ namespace image_preprocessing {
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> hsv_frame;
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> hsv_v_frame;
 
+        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> binary;
+        void init();
 
     public:
         /** TaskContext constructor for HSVSegmentationAndBlur
