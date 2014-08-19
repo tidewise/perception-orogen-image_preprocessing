@@ -68,6 +68,7 @@ void HSVSegmentationAndBlur::updateHook()
     
      if(_frame.read(in_frame,true) == RTT::NewData)
      {
+         
          base::samples::frame::Frame* pout_frame = out_frame.write_access();
          base::samples::frame::Frame* ph_frame = h_frame.write_access();
          base::samples::frame::Frame* ps_frame = s_frame.write_access();
@@ -75,7 +76,7 @@ void HSVSegmentationAndBlur::updateHook()
          base::samples::frame::Frame* phsv_frame = hsv_frame.write_access();
          base::samples::frame::Frame* phsv_v_frame = hsv_v_frame.write_access();
          base::samples::frame::Frame* binary = this->binary.write_access();
-
+         
          if(!pout_frame){
              std::cerr << "Warning could not acquire write access" << std::endl;
              return;
@@ -146,11 +147,18 @@ void HSVSegmentationAndBlur::updateHook()
          cvThreshold(v_plane, v_plane, _vMax, 255, CV_THRESH_TOZERO_INV);
          cvThreshold(v_plane, v_plane, _vMin, 255, CV_THRESH_BINARY);
          
+         pout_frame->time = in_frame->time;
+         phsv_frame->time = in_frame->time;
+         phsv_v_frame->time = in_frame->time;
+         ps_frame->time = in_frame->time;
+         
          frame_helper::FrameHelper::copyMatToFrame(h_plane,*ph_frame);
+         ph_frame->time = in_frame->time;
          h_frame.reset(ph_frame);
          _hDebug.write(h_frame);
          
          frame_helper::FrameHelper::copyMatToFrame(s_plane,*ps_frame);
+         pv_frame->time = in_frame->time;
          s_frame.reset(ps_frame);
          _sDebug.write(s_frame);
          
@@ -194,6 +202,8 @@ void HSVSegmentationAndBlur::updateHook()
          
          frame_helper::FrameHelper::copyMatToFrame(org,*pout_frame);
          frame_helper::FrameHelper::copyMatToFrame(bin,*binary);
+         
+         binary->time = in_frame->time;
          this->binary.reset(binary);
          out_frame.reset(pout_frame);
          _oframe.write(out_frame);
