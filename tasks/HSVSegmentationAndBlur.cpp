@@ -95,7 +95,7 @@ void HSVSegmentationAndBlur::updateHook()
          IplImage hsv(frame_helper::FrameHelper::convertToCvMat(*phsv_frame));
          //IplImage org(frame_helper::FrameHelper::convertToCvMat(*pout_frame));
          IplImage *org = cvCreateImage(cvGetSize(&hsv),hsv.depth,hsv.nChannels);
-         IplImage *bin= cvCreateImage(cvGetSize(&hsv), IPL_DEPTH_8U,1);
+         IplImage *bin = cvCreateImage(cvGetSize(&hsv), IPL_DEPTH_8U,1);
          cvCopy(&hsv,org,0);
          
          
@@ -166,7 +166,7 @@ void HSVSegmentationAndBlur::updateHook()
                 v_pixel_count++;
              }
              bool isset = h_plane->imageData[i] && s_plane->imageData[i] && v_plane->imageData[i];
-             bin->imageData[i] = isset?255:0;
+             bin->imageData[i] = isset?0:255.0;
              if(!isset){
                 org->imageData[(i*3)] = _unsetValue;
                 org->imageData[(i*3)+1] =  _unsetValue;
@@ -206,6 +206,7 @@ void HSVSegmentationAndBlur::updateHook()
          cvReleaseImage(&s_plane);
          cvReleaseImage(&v_plane);
          cvReleaseImage(&org);
+         cvReleaseImage(&bin);
 
          
          

@@ -13,7 +13,6 @@ Orocos.run 'image_preprocessing_test' do
     camera_port.connect_to mono.frame
     mono.start
 
-
     Vizkit.display camera_port
     Vizkit.display mono.oframe
     Vizkit.control log
