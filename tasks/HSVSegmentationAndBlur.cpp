@@ -97,12 +97,18 @@ void HSVSegmentationAndBlur::updateHook()
          //IplImage org(frame_helper::FrameHelper::convertToCvMat(*pout_frame));
          IplImage *org = cvCreateImage(cvGetSize(&hsv),hsv.depth,hsv.nChannels);
          IplImage *bin = cvCreateImage(cvGetSize(&hsv), IPL_DEPTH_8U,1);
+
+         if(_blur > 1 && _blur < org->width/2){
+            cvSmooth(org,org,CV_BLUR,_blur,_blur);
+         }
+         
          cvCopy(&hsv,org,0);
-         
-         
+
+
+
          cvCvtColor(&hsv,&hsv,CV_RGB2HSV);
          //cvCvtColor(&org,&org,CV_RGB2HSV);
-      
+
          IplImage *h_plane = cvCreateImage(cvGetSize(&hsv), 8, 1);
          IplImage *s_plane = cvCreateImage(cvGetSize(&hsv), 8, 1);
          IplImage *v_plane = cvCreateImage(cvGetSize(&hsv), 8, 1);
@@ -134,19 +140,19 @@ void HSVSegmentationAndBlur::updateHook()
                 v_plane->imageData[pos]+=correction*y;
             }
          }
-         
+
          frame_helper::FrameHelper::copyMatToFrame(v_plane,*phsv_v_frame);
          hsv_v_frame.reset(phsv_v_frame);
          _hsv_v_frame.write(hsv_v_frame);
-         
-         
+
+
          cvThreshold(h_plane, h_plane, _hMax, 255, CV_THRESH_TOZERO_INV);
          cvThreshold(h_plane, h_plane, _hMin, 255, CV_THRESH_BINARY);
          cvThreshold(s_plane, s_plane, _sMax, 255, CV_THRESH_TOZERO_INV);
          cvThreshold(s_plane, s_plane, _sMin, 255, CV_THRESH_BINARY);
          cvThreshold(v_plane, v_plane, _vMax, 255, CV_THRESH_TOZERO_INV);
          cvThreshold(v_plane, v_plane, _vMin, 255, CV_THRESH_BINARY);
-         
+
          pout_frame->time = in_frame->time;
          phsv_frame->time = in_frame->time;
          phsv_v_frame->time = in_frame->time;
@@ -181,9 +187,6 @@ void HSVSegmentationAndBlur::updateHook()
                 org->imageData[(i*3)+1] =  _unsetValue;
                 org->imageData[(i*3)+2] = _unsetValue;
              }
-         }
-         if(_blur > 1 && _blur < org->width/2){
-            cvSmooth(org,org,CV_BLUR,_blur,_blur);
          }
          if(_target_pixel_s.get() > 0)
          {
