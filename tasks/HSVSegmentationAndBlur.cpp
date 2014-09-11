@@ -174,7 +174,8 @@ void HSVSegmentationAndBlur::updateHook()
                 v_pixel_count++;
              }
              bool isset = h_plane->imageData[i] && s_plane->imageData[i] && v_plane->imageData[i];
-             bin->imageData[i] = isset?0:255;
+             bool invert = _invert.get();
+             bin->imageData[i] = isset?(invert?255:0):(invert?0:255);
              if(!isset){
                 org->imageData[(i*3)] = _unsetValue;
                 org->imageData[(i*3)+1] =  _unsetValue;

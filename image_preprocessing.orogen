@@ -74,6 +74,7 @@ task_context "HSVSegmentationAndBlur" do
     property("vMax","int",255)
     property("blur","int",0)
     property("unsetValue","int",0)
+    property("invert","bool",false)
 
     property("minVadapt","int",110)
         .doc("minumum adaptation for V value")
