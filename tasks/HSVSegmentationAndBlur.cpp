@@ -137,7 +137,11 @@ void HSVSegmentationAndBlur::updateHook()
          for(size_t x= 0; x < v_plane->width;x++){
             for(size_t y= 0; y < 30 ;y++){
                 size_t pos = x+(y*v_plane->width);
-                v_plane->imageData[pos]+=correction*y;
+                double v = v_plane->imageData[pos] + correction*y;
+                if(v<0)v=0;
+                if(v>2550)v=255;
+                v_plane->imageData[pos]=v;
+                
             }
          }
 
