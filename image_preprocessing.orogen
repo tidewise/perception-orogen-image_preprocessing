@@ -63,8 +63,11 @@ task_context "HSVSegmentationAndBlur" do
     output_port "binary_result", ro_ptr("/base/samples/frame/Frame")
 
     output_port "hDebug", ro_ptr("/base/samples/frame/Frame")
+    output_port "hDebugGray", ro_ptr("/base/samples/frame/Frame")
     output_port "vDebug", ro_ptr("/base/samples/frame/Frame")
+    output_port "vDebugGray", ro_ptr("/base/samples/frame/Frame")
     output_port "sDebug", ro_ptr("/base/samples/frame/Frame")
+    output_port "sDebugGray", ro_ptr("/base/samples/frame/Frame")
     output_port "hsv_v_frame", ro_ptr("/base/samples/frame/Frame")
     property("hMin","int",0)
     property("hMax","int",255)

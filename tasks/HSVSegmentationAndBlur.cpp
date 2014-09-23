@@ -30,6 +30,9 @@ void HSVSegmentationAndBlur::init(){
     base::samples::frame::Frame* ph_frame = new base::samples::frame::Frame();
     base::samples::frame::Frame* ps_frame = new base::samples::frame::Frame();
     base::samples::frame::Frame* pv_frame = new base::samples::frame::Frame();
+    base::samples::frame::Frame* phd_frame = new base::samples::frame::Frame();
+    base::samples::frame::Frame* psd_frame = new base::samples::frame::Frame();
+    base::samples::frame::Frame* pvd_frame = new base::samples::frame::Frame();
     base::samples::frame::Frame* phsv_frame = new base::samples::frame::Frame();
     base::samples::frame::Frame* phsv_v_frame = new base::samples::frame::Frame();
     base::samples::frame::Frame* org = new base::samples::frame::Frame();
@@ -37,6 +40,9 @@ void HSVSegmentationAndBlur::init(){
     h_frame.reset(ph_frame);
     s_frame.reset(ps_frame);
     v_frame.reset(pv_frame);
+    h_frame_debug.reset(phd_frame);
+    s_frame_debug.reset(psd_frame);
+    v_frame_debug.reset(pvd_frame);
     hsv_frame.reset(phsv_frame);
     hsv_v_frame.reset(phsv_v_frame);
     out_frame.reset(org);
@@ -73,6 +79,9 @@ void HSVSegmentationAndBlur::updateHook()
          base::samples::frame::Frame* ph_frame = h_frame.write_access();
          base::samples::frame::Frame* ps_frame = s_frame.write_access();
          base::samples::frame::Frame* pv_frame = v_frame.write_access();
+         base::samples::frame::Frame* phd_frame = h_frame_debug.write_access();
+         base::samples::frame::Frame* psd_frame = s_frame_debug.write_access();
+         base::samples::frame::Frame* pvd_frame = v_frame_debug.write_access();
          base::samples::frame::Frame* phsv_frame = hsv_frame.write_access();
          base::samples::frame::Frame* phsv_v_frame = hsv_v_frame.write_access();
          base::samples::frame::Frame* binary = this->binary.write_access();
@@ -85,6 +94,9 @@ void HSVSegmentationAndBlur::updateHook()
          ph_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false);
          ps_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false);
          pv_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false);
+         phd_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false);
+         psd_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false);
+         pvd_frame->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false);
          binary->init(in_frame->getWidth(), in_frame->getHeight(),in_frame->getDataDepth(),base::samples::frame::MODE_GRAYSCALE,false); //We have no binary image so far
          
          //Todo check weher this is neede
@@ -98,9 +110,6 @@ void HSVSegmentationAndBlur::updateHook()
          IplImage *org = cvCreateImage(cvGetSize(&hsv),hsv.depth,hsv.nChannels);
          IplImage *bin = cvCreateImage(cvGetSize(&hsv), IPL_DEPTH_8U,1);
 
-         if(_blur > 1 && _blur < org->width/2){
-            cvSmooth(org,org,CV_BLUR,_blur,_blur);
-         }
          
          cvCopy(&hsv,org,0);
 
@@ -112,7 +121,20 @@ void HSVSegmentationAndBlur::updateHook()
          IplImage *h_plane = cvCreateImage(cvGetSize(&hsv), 8, 1);
          IplImage *s_plane = cvCreateImage(cvGetSize(&hsv), 8, 1);
          IplImage *v_plane = cvCreateImage(cvGetSize(&hsv), 8, 1);
+         IplImage *h_plane_debug = cvCreateImage(cvGetSize(&hsv), 8, 1);
+         IplImage *s_plane_debug = cvCreateImage(cvGetSize(&hsv), 8, 1);
+         IplImage *v_plane_debug = cvCreateImage(cvGetSize(&hsv), 8, 1);
          cvCvtPixToPlane(&hsv, h_plane, s_plane, v_plane, 0);
+         
+         int blur = _blur;
+         if(!(blur % 2)){
+            blur += 1;
+         }
+         if(blur > 1 && _blur < org->width/2){
+            cvSmooth(h_plane,h_plane,CV_MEDIAN,blur);
+            cvSmooth(s_plane,s_plane,CV_MEDIAN,blur);
+            cvSmooth(v_plane,v_plane,CV_MEDIAN,blur);
+         }
          
          //Calculate current v-lighting's disturbtion
          double upper_lighting=0;
@@ -149,6 +171,9 @@ void HSVSegmentationAndBlur::updateHook()
          hsv_v_frame.reset(phsv_v_frame);
          _hsv_v_frame.write(hsv_v_frame);
 
+         cvCopy(h_plane, h_plane_debug);
+         cvCopy(s_plane, s_plane_debug);
+         cvCopy(v_plane, v_plane_debug);
 
          cvThreshold(h_plane, h_plane, _hMax, 255, CV_THRESH_TOZERO_INV);
          cvThreshold(h_plane, h_plane, _hMin, 255, CV_THRESH_BINARY);
@@ -175,6 +200,21 @@ void HSVSegmentationAndBlur::updateHook()
          frame_helper::FrameHelper::copyMatToFrame(v_plane,*pv_frame);
          v_frame.reset(pv_frame);
          _vDebug.write(v_frame);
+         
+         frame_helper::FrameHelper::copyMatToFrame(h_plane_debug ,*phd_frame);
+         phd_frame->time = in_frame->time;
+         h_frame_debug.reset(phd_frame);
+         _hDebugGray.write(h_frame_debug);
+         
+         frame_helper::FrameHelper::copyMatToFrame(s_plane_debug ,*psd_frame);
+         psd_frame->time = in_frame->time;
+         s_frame_debug.reset(psd_frame);
+         _sDebugGray.write(s_frame_debug);
+         
+         frame_helper::FrameHelper::copyMatToFrame(v_plane_debug ,*pvd_frame);
+         pvd_frame->time = in_frame->time;
+         v_frame_debug.reset(pvd_frame);
+         _vDebugGray.write(v_frame_debug);
          
          
          size_t v_pixel_count = 0;

@@ -30,6 +30,9 @@ namespace image_preprocessing {
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> h_frame;
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> v_frame;
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> s_frame;
+        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> h_frame_debug;
+        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> v_frame_debug;
+        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> s_frame_debug;
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> hsv_frame;
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> hsv_v_frame;
 
