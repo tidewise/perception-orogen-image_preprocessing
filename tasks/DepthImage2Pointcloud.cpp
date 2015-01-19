@@ -29,20 +29,29 @@ void DepthImage2Pointcloud::frameCallback(const base::Time &ts, const ::RTT::ext
     pc.time = frame_sample->time;
     Eigen::Vector3d v;
     if(color_frame.get()){
-        assert(frame_sample->width == color_frame->getWidth() && frame_sample->height == color_frame->getHeight());
         for(int x = 0; x<frame_sample->width;x++){
             for(int y = 0; y<frame_sample->height;y++){
-                    if(!frame_sample->getScenePoint(x,y,v)) continue;
-                    pc.points.push_back(v);
-                    
+                if(!frame_sample->getScenePoint(x,y,v)){
+                    continue;
+                }
+                pc.points.push_back(v);
+                if(frame_sample->width == color_frame->getWidth() && frame_sample->height == color_frame->getHeight()){
                     const uint8_t *pos = &color_frame->getImage()[(color_frame->getWidth()*3.0)*y+(x*3.0)]; 
                     pc.colors.push_back(Eigen::Vector4d((*pos)/255.0,(*(pos+1))/255.0,(*(pos+2))/255.0,1.0f));
+                }else{
+                    size_t x_n = (double)x/frame_sample->width * color_frame->getWidth();
+                    size_t y_n = (double)y/frame_sample->height * color_frame->getHeight();
+                    const uint8_t *pos = &color_frame->getImage()[(color_frame->getWidth()*3.0)*y_n+(x_n*3.0)];
+                    pc.colors.push_back(Eigen::Vector4d((*pos)/255.0,(*(pos+1))/255.0,(*(pos+2))/255.0,1.0f));
+                }
             }
         }
     }else{
         for(int x = 0; x<frame_sample->width;x++){
             for(int y = 0; y<frame_sample->height;y++){
-                    if(!frame_sample->getScenePoint(x,y,v)) continue;
+                    if(!frame_sample->getScenePoint(x,y,v)){
+                        continue;
+                    }
                     pc.points.push_back(v);
             }
         }
