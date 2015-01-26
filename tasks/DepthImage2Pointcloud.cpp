@@ -35,15 +35,16 @@ void DepthImage2Pointcloud::frameCallback(const base::Time &ts, const ::RTT::ext
                     continue;
                 }
                 pc.points.push_back(v);
+                size_t x_n,y_n;
                 if(frame_sample->width == color_frame->getWidth() && frame_sample->height == color_frame->getHeight()){
-                    const uint8_t *pos = &color_frame->getImage()[(color_frame->getWidth()*3.0)*y+(x*3.0)]; 
-                    pc.colors.push_back(Eigen::Vector4d((*pos)/255.0,(*(pos+1))/255.0,(*(pos+2))/255.0,1.0f));
+                    x_n = x;
+                    y_n = y;
                 }else{
-                    size_t x_n = (double)x/frame_sample->width * color_frame->getWidth();
-                    size_t y_n = (double)y/frame_sample->height * color_frame->getHeight();
-                    const uint8_t *pos = &color_frame->getImage()[(color_frame->getWidth()*3.0)*y_n+(x_n*3.0)];
-                    pc.colors.push_back(Eigen::Vector4d((*pos)/255.0,(*(pos+1))/255.0,(*(pos+2))/255.0,1.0f));
+                    x_n = (double)x/frame_sample->width * color_frame->getWidth();
+                    y_n = (double)y/frame_sample->height * color_frame->getHeight();
                 }
+                const uint8_t *pos = &color_frame->getImage()[(color_frame->getPixelSize()*x_n)+(y_n*color_frame->getRowSize())];
+                pc.colors.push_back(Eigen::Vector4d((*pos)/255.0,(*(pos+1))/255.0,(*(pos+2))/255.0,1.0f));
             }
         }
     }else{
