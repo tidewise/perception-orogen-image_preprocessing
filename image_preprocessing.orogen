@@ -4,6 +4,7 @@ version "0.1"
 using_library "base-types"
 using_library "opencv"
 import_types_from "base"
+using_task_library "transformer"
 
 using_library "frame_helper"
 import_types_from "frame_helper/Calibration.h"
@@ -43,6 +44,11 @@ task_context "DepthImage2Pointcloud" do
         max_latency 0.1
         align_port "color_frame",0.3
         align_port "frame",0.3
+    end
+
+    transformer do
+        transform "input", "pc"
+        max_latency 60
     end
 end
 

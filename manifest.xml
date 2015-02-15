@@ -7,6 +7,7 @@
   <url>dummy-url</url>
   <logo>dummy-logo-url</logo>
   <depend package="base/types"/>
+  <depend package="drivers/orogen/transformer"/>
   <depend package="image_processing/frame_helper"/>
   <depend package="drivers/orogen/aggregator" />
   <versioncontrol type="dummy-version-control" url="dummy-version-control-url" />
