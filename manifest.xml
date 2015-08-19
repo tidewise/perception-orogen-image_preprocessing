@@ -11,4 +11,5 @@
   <depend package="image_processing/frame_helper"/>
   <depend package="drivers/orogen/aggregator" />
   <versioncontrol type="dummy-version-control" url="dummy-version-control-url" />
+  <tags>stable</tags>
 </package>
