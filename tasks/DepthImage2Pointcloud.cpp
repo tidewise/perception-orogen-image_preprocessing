@@ -26,7 +26,7 @@ void DepthImage2Pointcloud::color_frameCallback(const base::Time &ts, const ::RT
 void DepthImage2Pointcloud::frameCallback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::DistanceImage > &frame_sample)
 {
     Eigen::Affine3d tf;
-    if (!_input2pc.get(ts, tf, false)) return;
+    if (!_input2pc.get(ts, tf, false) && _input_frame.get().empty() && _pc_frame.get().empty() ) return;
     base::samples::Pointcloud pc;
     pc.time = frame_sample->time;
     Eigen::Vector3d v;
