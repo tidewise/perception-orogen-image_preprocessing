@@ -124,7 +124,7 @@ void HSVSegmentationAndBlur::updateHook()
          IplImage *h_plane_debug = cvCreateImage(cvGetSize(&hsv), 8, 1);
          IplImage *s_plane_debug = cvCreateImage(cvGetSize(&hsv), 8, 1);
          IplImage *v_plane_debug = cvCreateImage(cvGetSize(&hsv), 8, 1);
-         cvCvtPixToPlane(&hsv, h_plane, s_plane, v_plane, 0);
+         cvSplit(&hsv, h_plane, s_plane, v_plane, 0);
          
          int blur = _blur;
          if(!(blur % 2)){
@@ -167,7 +167,7 @@ void HSVSegmentationAndBlur::updateHook()
             }
          }
 
-         frame_helper::FrameHelper::copyMatToFrame(v_plane,*phsv_v_frame);
+         frame_helper::FrameHelper::copyMatToFrame(cv::cvarrToMat(v_plane),*phsv_v_frame);
          hsv_v_frame.reset(phsv_v_frame);
          _hsv_v_frame.write(hsv_v_frame);
 
@@ -187,31 +187,31 @@ void HSVSegmentationAndBlur::updateHook()
          phsv_v_frame->time = in_frame->time;
          ps_frame->time = in_frame->time;
          
-         frame_helper::FrameHelper::copyMatToFrame(h_plane,*ph_frame);
+         frame_helper::FrameHelper::copyMatToFrame(cv::cvarrToMat(h_plane),*ph_frame);
          ph_frame->time = in_frame->time;
          h_frame.reset(ph_frame);
          _hDebug.write(h_frame);
          
-         frame_helper::FrameHelper::copyMatToFrame(s_plane,*ps_frame);
+         frame_helper::FrameHelper::copyMatToFrame(cv::cvarrToMat(s_plane),*ps_frame);
          pv_frame->time = in_frame->time;
          s_frame.reset(ps_frame);
          _sDebug.write(s_frame);
          
-         frame_helper::FrameHelper::copyMatToFrame(v_plane,*pv_frame);
+         frame_helper::FrameHelper::copyMatToFrame(cv::cvarrToMat(v_plane),*pv_frame);
          v_frame.reset(pv_frame);
          _vDebug.write(v_frame);
          
-         frame_helper::FrameHelper::copyMatToFrame(h_plane_debug ,*phd_frame);
+         frame_helper::FrameHelper::copyMatToFrame(cv::cvarrToMat(h_plane_debug),*phd_frame);
          phd_frame->time = in_frame->time;
          h_frame_debug.reset(phd_frame);
          _hDebugGray.write(h_frame_debug);
          
-         frame_helper::FrameHelper::copyMatToFrame(s_plane_debug ,*psd_frame);
+         frame_helper::FrameHelper::copyMatToFrame(cv::cvarrToMat(s_plane_debug),*psd_frame);
          psd_frame->time = in_frame->time;
          s_frame_debug.reset(psd_frame);
          _sDebugGray.write(s_frame_debug);
          
-         frame_helper::FrameHelper::copyMatToFrame(v_plane_debug ,*pvd_frame);
+         frame_helper::FrameHelper::copyMatToFrame(cv::cvarrToMat(v_plane_debug),*pvd_frame);
          pvd_frame->time = in_frame->time;
          v_frame_debug.reset(pvd_frame);
          _vDebugGray.write(v_frame_debug);
@@ -248,8 +248,8 @@ void HSVSegmentationAndBlur::updateHook()
             }
          }
          
-         frame_helper::FrameHelper::copyMatToFrame(org,*pout_frame);
-         frame_helper::FrameHelper::copyMatToFrame(bin,*binary);
+         frame_helper::FrameHelper::copyMatToFrame(cv::cvarrToMat(org),*pout_frame);
+         frame_helper::FrameHelper::copyMatToFrame(cv::cvarrToMat(bin),*binary);
          
          binary->time = in_frame->time;
          this->binary.reset(binary);
