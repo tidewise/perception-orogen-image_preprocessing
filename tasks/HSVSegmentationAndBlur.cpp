@@ -131,15 +131,15 @@ void HSVSegmentationAndBlur::updateHook()
         double upper_lighting=0;
         double lower_lighting=0;
         uint64_t num_pixel=0;
-        for(size_t x= 0; x < v_plane->size().width;x++){
-            assert(v_plane->height > 30);
+        for(size_t x= 0; x < v_plane->cols; x++){
+            assert(v_plane->rows > 30);
             for(size_t y= 0; y < 30 ;y++){
                 size_t pos = x+(y*v_plane->size().width);
                 upper_lighting += v_plane->data[pos];
                 num_pixel++;
             }
-            for(size_t y= v_plane->size().height-30; y < v_plane->size().height;y++){
-                size_t pos = x+(y*v_plane->size().width);
+            for(size_t y= v_plane->rows - 30; y < v_plane->rows; y++){
+                size_t pos = x+(y*v_plane->cols);
                 lower_lighting += v_plane->data[pos];
             }
         }
@@ -147,9 +147,9 @@ void HSVSegmentationAndBlur::updateHook()
         correction /= num_pixel*v_plane->size().height;
         printf("Correctoin factor: %f (%lu,%lu)\n",correction,upper_lighting,lower_lighting);
         
-        for(size_t x= 0; x < v_plane->size().width;x++) {
+        for(size_t x= 0; x < v_plane->cols; x++) {
             for(size_t y= 0; y < 30 ;y++){
-                size_t pos = x+(y*v_plane->size().width);
+                size_t pos = x+(y*v_plane->cols);
                 double v = v_plane->data[pos] + correction*y;
                 if(v<0)v=0;
                 if(v>2550)v=255;
@@ -206,7 +206,7 @@ void HSVSegmentationAndBlur::updateHook()
          
          
         size_t v_pixel_count = 0;
-        for(size_t i= 0; i < (v_plane->size().width * v_plane->size().height); i++) {
+        for(size_t i= 0; i < v_plane->total(); i++) {
             if(v_plane->data[i]) {
                 v_pixel_count++;
             }
