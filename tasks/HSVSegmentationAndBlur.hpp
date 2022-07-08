@@ -5,6 +5,8 @@
 
 #include "image_preprocessing/HSVSegmentationAndBlurBase.hpp"
 
+#include <frame_helper/FrameHelper.h>
+
 namespace image_preprocessing {
 
     /*! \class HSVSegmentationAndBlur 
@@ -38,6 +40,8 @@ namespace image_preprocessing {
 
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> binary;
         void init();
+
+        void threshold(cv::Mat &img, int min, int max);
 
     public:
         /** TaskContext constructor for HSVSegmentationAndBlur
