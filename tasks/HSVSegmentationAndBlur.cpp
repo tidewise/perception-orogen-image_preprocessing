@@ -145,14 +145,14 @@ void HSVSegmentationAndBlur::updateHook()
         }
         double correction = (double)upper_lighting-lower_lighting;
         correction /= num_pixel*v_plane->size().height;
-        printf("Correctoin factor: %f (%lu,%lu)\n",correction,upper_lighting,lower_lighting);
+        printf("Correction factor: %f (%lu,%lu)\n",correction,upper_lighting,lower_lighting);
         
         for(size_t x= 0; x < v_plane->cols; x++) {
             for(size_t y= 0; y < 30 ;y++){
                 size_t pos = x+(y*v_plane->cols);
                 double v = v_plane->data[pos] + correction*y;
                 if(v<0)v=0;
-                if(v>2550)v=255;
+                if(v>255)v=255;
                 v_plane->data[pos]=v;
                 
             }
