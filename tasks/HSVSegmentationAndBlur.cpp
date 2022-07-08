@@ -112,22 +112,20 @@ void HSVSegmentationAndBlur::updateHook()
 
         cvtColor(hsv, hsv, cv::COLOR_RGB2HSV);
 
+        int blur = _blur;
+        if(!(blur % 2)){
+            blur += 1;
+        }
+        if(blur > 1 && _blur < (org.size().width / 2)) {
+            cv::medianBlur(hsv, hsv, blur);
+        }        
+
         std::vector<cv::Mat> hsv_channels;
         split(hsv, hsv_channels);
 
         cv::Mat *h_plane = &(hsv_channels.at(0));
         cv::Mat *s_plane = &(hsv_channels.at(1));
         cv::Mat *v_plane = &(hsv_channels.at(2));
-         
-        int blur = _blur;
-        if(!(blur % 2)){
-            blur += 1;
-        }
-        if(blur > 1 && _blur < (org.size().width / 2)) {
-            for (uint i = 0; i < hsv_channels.size(); ++i) {
-                cv::medianBlur(hsv_channels.at(i), hsv_channels.at(i), blur);
-            }
-        }
         
         //Calculate current v-lighting's disturbtion
         double upper_lighting=0;
