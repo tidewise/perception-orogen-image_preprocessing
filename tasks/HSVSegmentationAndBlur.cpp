@@ -214,9 +214,9 @@ void HSVSegmentationAndBlur::updateHook()
             bool invert = _invert.get();
             bin.data[i] = isset?(invert?0:255):(invert?255:0);
             if(!isset){
-            org.data[(i*3)]     = _unsetValue;
-            org.data[(i*3)+1]   = _unsetValue;
-            org.data[(i*3)+2]   = _unsetValue;
+                org.data[(i*3)]     = _unsetValue;
+                org.data[(i*3)+1]   = _unsetValue;
+                org.data[(i*3)+2]   = _unsetValue;
             }
         }
         if(_target_pixel_s.get() > 0)
