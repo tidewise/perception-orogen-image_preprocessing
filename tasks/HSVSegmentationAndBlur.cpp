@@ -208,7 +208,7 @@ void HSVSegmentationAndBlur::updateHook()
          
          
         size_t v_pixel_count = 0;
-        for(size_t i= 0; i < v_plane->size(); i++) {
+        for(size_t i= 0; i < (v_plane->size().width * v_plane->size().height); i++) {
             if(v_plane->data[i]) {
                 v_pixel_count++;
             }
