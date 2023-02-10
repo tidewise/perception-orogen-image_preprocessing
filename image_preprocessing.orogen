@@ -2,7 +2,6 @@ name "image_preprocessing"
 version "0.1"
 
 using_library "base-types"
-using_library "opencv4"
 import_types_from "base"
 using_task_library "transformer"
 
