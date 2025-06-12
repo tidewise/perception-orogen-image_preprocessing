@@ -11,8 +11,9 @@ namespace image_preprocessing {
 	friend class MonoTaskBase;
     protected:
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> in_frame;
+        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> grayscale_frame;
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> out_frame;
-        
+
 
     public:
         MonoTask(std::string const& name = "image_preprocessing::MonoTask", TaskCore::TaskState initial_state = Stopped);
@@ -47,7 +48,7 @@ namespace image_preprocessing {
          *
          * The error(), exception() and fatal() calls, when called in this hook,
          * allow to get into the associated RunTimeError, Exception and
-         * FatalError states. 
+         * FatalError states.
          *
          * In the first case, updateHook() is still called, and recover() allows
          * you to go back into the Running state.  In the second case, the
