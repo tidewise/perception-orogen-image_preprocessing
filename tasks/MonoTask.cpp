@@ -9,8 +9,8 @@ using namespace base::samples::frame;
 MonoTask::MonoTask(std::string const& name, TaskCore::TaskState initial_state)
     : MonoTaskBase(name, initial_state)
 {
+    processed_frame.reset(new Frame);
     out_frame.reset(new Frame);
-    grayscale_frame.reset(new Frame);
 }
 
 MonoTask::~MonoTask()
@@ -57,22 +57,26 @@ void MonoTask::updateHook()
         // Convert to Grayscale but keep the previous final mode
         if ((_convert_to_grayscale.value()) && !(in_frame->isGrayscale()) &&
             (frame_mode != MODE_GRAYSCALE)) {
-            Frame* pgrayscale_frame = grayscale_frame.write_access();
-            pgrayscale_frame->init(in_frame->getWidth(),
+            Frame* pprocessed_frame = processed_frame.write_access();
+            pprocessed_frame->init(in_frame->getWidth(),
                 in_frame->getHeight(),
                 in_frame->getDataDepth(),
                 MODE_GRAYSCALE,
                 false);
-            frame_helper.convertColor(*in_frame, *pgrayscale_frame);
-            in_frame.reset(pgrayscale_frame);
+            frame_helper.convertColor(*in_frame, *pprocessed_frame);
+            processed_frame.reset(pprocessed_frame);
+        }
+        else {
+            processed_frame = in_frame;
         }
 
-        frame_helper.convert(*in_frame,
+        frame_helper.convert(*processed_frame,
             *pout_frame,
             offset_x,
             offset_y,
             resize_algorithm,
             calibrate);
+
         out_frame.reset(pout_frame);
         _oframe.write(out_frame);
     }

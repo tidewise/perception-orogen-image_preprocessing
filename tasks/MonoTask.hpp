@@ -11,9 +11,8 @@ namespace image_preprocessing {
 	friend class MonoTaskBase;
     protected:
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> in_frame;
-        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> grayscale_frame;
+        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> processed_frame;
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> out_frame;
-
 
     public:
         MonoTask(std::string const& name = "image_preprocessing::MonoTask", TaskCore::TaskState initial_state = Stopped);
