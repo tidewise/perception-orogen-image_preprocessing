@@ -64,6 +64,7 @@ void MonoTask::updateHook()
                 MODE_GRAYSCALE,
                 false);
             frame_helper.convertColor(*in_frame, *pprocessed_frame);
+            pprocessed_frame->time = in_frame->time;
             processed_frame.reset(pprocessed_frame);
         }
         else {
