@@ -11,6 +11,8 @@ using_library "frame_helper"
 import_types_from "frame_helper/Calibration.h"
 import_types_from "frame_helper/FrameHelperTypes.h"
 
+typekit.export_types "frame_helper/CameraCalibration"
+
 task_context "BaseTask" do
     # Whether the image should be undistorted
     #
