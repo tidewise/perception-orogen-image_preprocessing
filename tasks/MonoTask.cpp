@@ -1,7 +1,6 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "MonoTask.hpp"
-#include <base-logging/Logging.hpp>
 
 using namespace image_preprocessing;
 using namespace base::samples::frame;

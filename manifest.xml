@@ -10,9 +10,7 @@
   <depend package="drivers/orogen/transformer"/>
   <depend package="image_processing/frame_helper"/>
   <depend package="drivers/orogen/aggregator" />
-  <depend package="opencv" />
 
   <test_depend name="tools/syskit" />
-  <versioncontrol type="dummy-version-control" url="dummy-version-control-url" />
   <tags>stable</tags>
 </package>
