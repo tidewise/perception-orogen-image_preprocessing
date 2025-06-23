@@ -14,39 +14,33 @@ import_types_from "frame_helper/FrameHelperTypes.h"
 typekit.export_types "frame_helper/CameraCalibration"
 
 task_context "BaseTask" do
-    # Whether the image should be undistorted
-    #
-    # Subclasses should have a property that provide the calibration parameter
     property("calibrate", "bool", false)
+        .doc("Whether the image should be undistorted. "\
+             "Subclasses should have a property that provide the calibration parameter ")
 
-    # Convert the image to grayscale regardless of the output mode
-    #
-    # Note that this is a no-op if set and frame_mode is MODE_GRAYSCALE
-    property("convert_to_grayscale", "bool", false)
-
-    # The mode of the output image
     property("frame_mode", "/base/samples/frame/frame_mode_t", :MODE_BAYER)
+        .doc("The mode of the output image")
 
     property("resize_algorithm", "/frame_helper/ResizeAlgorithm", :BAYER_RESIZE)
 
-    # Scale factor in the X (horizontal) direction
     property("scale_x", "double", 0.5)
+        .doc("Scale factor in the X (horizontal) direction")
 
-    # Scale factor in the Y (vertical) direction
     property("scale_y", "double", 0.5)
+        .doc("Scale factor in the Y (vertical) direction")
 
-    # the offset to be used on the left margin in case the of resizing widescreen
-    # images"
     property("offset_x",   "int", 0)
+        .doc("the offset to be used on the left margin " \
+             "in case of resizing widescreen images")
 
-    # the offset to be used on the top margin in case the of resizing widescreen
-    # images"
-    property("offset_y",   "int", 0)
+    property("offset_y", "int", 0)
+        .doc("the offset to be used on the top margin " \
+             "in case of resizing widescreen images")
 end
 
 task_context "DepthImage2Pointcloud" do
     input_port("color_frame", ro_ptr("/base/samples/frame/Frame"))
-        .doc("Color Frame for DepthImage if availible")
+        .doc("Color Frame for DepthImage if available")
 
     input_port "frame", ro_ptr("/base/samples/DistanceImage")
     output_port "pointcloud", "/base/samples/Pointcloud"
@@ -67,6 +61,10 @@ end
 
 task_context "MonoTask" do
     subclasses "BaseTask"
+
+    property("convert_to_grayscale", "bool", false)
+        .doc("Convert the image to grayscale regardless of the output mode. " \
+         "Note that this is a no-op if set and frame_mode is MODE_GRAYSCALE")
 
     input_port "frame", ro_ptr("/base/samples/frame/Frame")
     output_port "oframe", ro_ptr("/base/samples/frame/Frame")
