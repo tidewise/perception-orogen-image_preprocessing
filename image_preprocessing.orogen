@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 name "image_preprocessing"
 version "0.1"
 
@@ -15,7 +13,7 @@ typekit.export_types "frame_helper/CameraCalibration"
 
 task_context "BaseTask" do
     property("calibrate", "bool", false)
-        .doc("Whether the image should be undistorted. "\
+        .doc("Whether the image should be undistorted. " \
              "Subclasses should have a property that provide the calibration parameter ")
 
     property("frame_mode", "/base/samples/frame/frame_mode_t", :MODE_BAYER)
