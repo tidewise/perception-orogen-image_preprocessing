@@ -1,6 +1,6 @@
 <package>
   <description brief="Orogen task for converting frames into an other foramt or to resize them.">
-  The package is based on fame_helper. 
+  The package is based on fame_helper.
   </description>
   <author>Alexander.Duda/Alexander.Duda@dfki.de</author>
   <license>dummy-license</license>
@@ -10,6 +10,7 @@
   <depend package="drivers/orogen/transformer"/>
   <depend package="image_processing/frame_helper"/>
   <depend package="drivers/orogen/aggregator" />
-  <versioncontrol type="dummy-version-control" url="dummy-version-control-url" />
+
+  <test_depend name="tools/syskit" />
   <tags>stable</tags>
 </package>

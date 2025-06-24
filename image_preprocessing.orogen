@@ -9,40 +9,46 @@ using_library "frame_helper"
 import_types_from "frame_helper/Calibration.h"
 import_types_from "frame_helper/FrameHelperTypes.h"
 
+typekit.export_types "frame_helper/CameraCalibration"
+
 task_context "BaseTask" do
-   property("calibrate","bool",false)
+    property("calibrate", "bool", false)
+        .doc("Whether the image should be undistorted. " \
+             "Subclasses should have a property that provide the calibration parameter ")
 
-   property("frame_mode", "/base/samples/frame/frame_mode_t", :MODE_BAYER).
-       doc "output frame mode"
+    property("frame_mode", "/base/samples/frame/frame_mode_t", :MODE_BAYER)
+        .doc("The mode of the output image")
 
-   property("resize_algorithm","/frame_helper/ResizeAlgorithm",:BAYER_RESIZE)
- 
-   property("scale_x", "double", 0.5).
-       doc "scale factor for the x direction"
+    property("resize_algorithm", "/frame_helper/ResizeAlgorithm", :BAYER_RESIZE)
 
-   property("scale_y", "double" ,0.5).
-       doc "scale factor for the y direction"
+    property("scale_x", "double", 0.5)
+        .doc("Scale factor in the X (horizontal) direction")
 
-   property("offset_x",   "int", 0).
-       doc "the offset to be used on the left margin in case the of resizing widescreen images"
+    property("scale_y", "double", 0.5)
+        .doc("Scale factor in the Y (vertical) direction")
 
-   property("offset_y",   "int", 0).
-       doc "the offset to be used on the left margin in case the of resizing widescreen images"
+    property("offset_x",   "int", 0)
+        .doc("the offset to be used on the left margin " \
+             "in case of resizing widescreen images")
+
+    property("offset_y", "int", 0)
+        .doc("the offset to be used on the top margin " \
+             "in case of resizing widescreen images")
 end
 
 task_context "DepthImage2Pointcloud" do
-    input_port("color_frame", ro_ptr("/base/samples/frame/Frame")).
-        doc("Color Frame for DepthImage if availible")
+    input_port("color_frame", ro_ptr("/base/samples/frame/Frame"))
+        .doc("Color Frame for DepthImage if available")
 
     input_port "frame", ro_ptr("/base/samples/DistanceImage")
     output_port "pointcloud", "/base/samples/Pointcloud"
 
-    port_driven 
+    port_driven
 
     stream_aligner do
         max_latency 0.1
-        align_port "color_frame",0.3
-        align_port "frame",0.3
+        align_port "color_frame", 0.3
+        align_port "frame", 0.3
     end
 
     transformer do
@@ -54,17 +60,20 @@ end
 task_context "MonoTask" do
     subclasses "BaseTask"
 
+    property("convert_to_grayscale", "bool", false)
+        .doc("Convert the image to grayscale regardless of the output mode. " \
+         "Note that this is a no-op if set and frame_mode is MODE_GRAYSCALE")
+
     input_port "frame", ro_ptr("/base/samples/frame/Frame")
     output_port "oframe", ro_ptr("/base/samples/frame/Frame")
-    property("calibration","frame_helper/CameraCalibration")
+    property("calibration", "frame_helper/CameraCalibration")
     port_driven "frame"
 end
 
 task_context "HSVSegmentationAndBlur" do
-
     input_port "frame", ro_ptr("/base/samples/frame/Frame")
     output_port "oframe", ro_ptr("/base/samples/frame/Frame")
-    
+
     output_port "binary_result", ro_ptr("/base/samples/frame/Frame")
 
     output_port "hDebug", ro_ptr("/base/samples/frame/Frame")
@@ -74,24 +83,24 @@ task_context "HSVSegmentationAndBlur" do
     output_port "sDebug", ro_ptr("/base/samples/frame/Frame")
     output_port "sDebugGray", ro_ptr("/base/samples/frame/Frame")
     output_port "hsv_v_frame", ro_ptr("/base/samples/frame/Frame")
-    property("hMin","int",0)
-    property("hMax","int",255)
-    property("vMin","int",0)
-    property("sMax","int",255)
-    property("sMin","int",0)
-    property("vMax","int",255)
-    property("blur","int",0)
-    property("unsetValue","int",0)
-    property("invert","bool",false)
+    property("hMin", "int", 0)
+    property("hMax", "int", 255)
+    property("vMin", "int", 0)
+    property("sMax", "int", 255)
+    property("sMin", "int", 0)
+    property("vMax", "int", 255)
+    property("blur", "int", 0)
+    property("unsetValue", "int", 0)
+    property("invert", "bool", false)
 
-    property("minVadapt","int",110)
+    property("minVadapt", "int", 110)
         .doc("minumum adaptation for V value")
-    
-    property("maxVadapt","int",140)
+
+    property("maxVadapt", "int", 140)
         .doc("minumum adaptation for V value")
-    
-    property("target_pixel_s","int",100)
-    property("steps_per_frame","int",1)
+
+    property("target_pixel_s", "int", 100)
+    property("steps_per_frame", "int", 1)
     port_driven "frame"
 end
 
@@ -101,10 +110,9 @@ task_context "StereoTask" do
     input_port "frame_left", ro_ptr("/base/samples/frame/Frame")
     input_port "frame_right", ro_ptr("/base/samples/frame/Frame")
     output_port "oframe_pair", ro_ptr("/base/samples/frame/FramePair")
-    property("calibration","/frame_helper/StereoCalibration")
-    port_driven "frame_left","frame_right"
+    property("calibration", "/frame_helper/StereoCalibration")
+    port_driven "frame_left", "frame_right"
 end
-
 
 # Declares a deployment, i.e. an actual executable that contains various tasks.
 deployment "image_preprocessing_test" do
