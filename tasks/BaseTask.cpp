@@ -18,19 +18,15 @@ BaseTask::~BaseTask()
 {
 }
 
+bool BaseTask::configureHook()
+{
+    if (! BaseTaskBase::configureHook())
+        return false;
 
+    cv::setNumThreads(_opencv_num_threads.get());
+    return true;
+}
 
-/// The following lines are template definitions for the various state machine
-// hooks defined by Orocos::RTT. See BaseTask.hpp for more detailed
-// documentation about them.
-
-// bool BaseTask::configureHook()
-// {
-//     if (! BaseTaskBase::configureHook())
-//         return false;
-//     return true;
-// }
-//
 bool BaseTask::startHook()
 {
     if (! BaseTaskBase::startHook())
