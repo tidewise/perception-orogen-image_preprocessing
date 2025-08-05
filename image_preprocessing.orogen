@@ -34,6 +34,9 @@ task_context "BaseTask" do
     property("offset_y", "int", 0)
         .doc("the offset to be used on the top margin " \
              "in case of resizing widescreen images")
+
+    property("opencv_num_threads", "int", -1)
+        .doc("the maximum number of threads allowed")
 end
 
 task_context "DepthImage2Pointcloud" do
