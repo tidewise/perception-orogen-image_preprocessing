@@ -24,7 +24,6 @@ HSVSegmentationAndBlur::~HSVSegmentationAndBlur()
 
 
 void HSVSegmentationAndBlur::init(){
-    base::samples::frame::Frame* pout_frame = new base::samples::frame::Frame();
     base::samples::frame::Frame* ph_frame = new base::samples::frame::Frame();
     base::samples::frame::Frame* ps_frame = new base::samples::frame::Frame();
     base::samples::frame::Frame* pv_frame = new base::samples::frame::Frame();
@@ -131,23 +130,23 @@ void HSVSegmentationAndBlur::updateHook()
         double upper_lighting=0;
         double lower_lighting=0;
         uint64_t num_pixel=0;
-        for(size_t x= 0; x < v_plane->cols; x++){
+        for(int x= 0; x < v_plane->cols; x++){
             assert(v_plane->rows > 30);
             for(size_t y= 0; y < 30 ;y++){
                 size_t pos = x+(y*v_plane->size().width);
                 upper_lighting += v_plane->data[pos];
                 num_pixel++;
             }
-            for(size_t y= v_plane->rows - 30; y < v_plane->rows; y++){
-                size_t pos = x+(y*v_plane->cols);
+            for(int y= v_plane->rows - 30; y < v_plane->rows; y++){
+                int pos = x+(y*v_plane->cols);
                 lower_lighting += v_plane->data[pos];
             }
         }
         double correction = (double)upper_lighting-lower_lighting;
         correction /= num_pixel*v_plane->size().height;
-        printf("Correction factor: %f (%lu,%lu)\n",correction,upper_lighting,lower_lighting);
+        printf("Correction factor: %f (%f,%f)\n",correction,upper_lighting,lower_lighting);
         
-        for(size_t x= 0; x < v_plane->cols; x++) {
+        for(int x= 0; x < v_plane->cols; x++) {
             for(size_t y= 0; y < 30 ;y++){
                 size_t pos = x+(y*v_plane->cols);
                 double v = v_plane->data[pos] + correction*y;
@@ -205,7 +204,7 @@ void HSVSegmentationAndBlur::updateHook()
         _vDebug.write(v_frame);
          
          
-        size_t v_pixel_count = 0;
+        int v_pixel_count = 0;
         for(size_t i= 0; i < v_plane->total(); i++) {
             if(v_plane->data[i]) {
                 v_pixel_count++;
