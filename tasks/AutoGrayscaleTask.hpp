@@ -4,6 +4,7 @@
 #define IMAGE_PREPROCESSING_AUTOGRAYSCALETASK_TASK_HPP
 
 #include "image_preprocessing/AutoGrayscaleTaskBase.hpp"
+#include <opencv2/core/mat.hpp>
 
 namespace image_preprocessing {
 
@@ -30,7 +31,24 @@ argument.
         friend class AutoGrayscaleTaskBase;
 
     protected:
+        std::uint8_t m_on_trigger;
+        std::uint8_t m_off_trigger;
+
+        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> m_frame;
+
+        States evaluate(std::size_t bightness) const;
+        void updateState(States next_state);
+
     public:
+        // Computes the frame average brightness
+        // @param frame The evaluated image. It will be converted in place to HSV
+        static std::pair<std::uint8_t, cv::Mat> avgBrightness(cv::Mat const& frame,
+            base::samples::frame::frame_mode_t mode);
+
+        // Fills all channels from dst with the value channel from hsv. It is assumed
+        // that both Mat have same shape
+        static void grayscaleFromHSV(cv::Mat const& hsv, cv::Mat& dst);
+
         /** TaskContext constructor for AutoGrayscaleTask
          * \param name Name of the task. This name needs to be unique to make it
          * identifiable via nameservices.
