@@ -23,8 +23,8 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
             Orocos.load_typekit "base"
         end
 
-        @task.properties.on_trigger = 100;
-        @task.properties.off_trigger = 130;
+        @task.properties.on_trigger = 100
+        @task.properties.off_trigger = 130
 
         @night_rgb = Types.base.samples.frame.Frame.new
         @day_rgb = Types.base.samples.frame.Frame.new
@@ -45,7 +45,7 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
 
         assert_in_delta t, out.time, 1e-6
         assert_equal :MODE_GRAYSCALE, out.frame_mode
-        assert_garyscale_data out.image
+        assert_grayscale_data out.image
     end
 
     it "does not convert to grayscale in day light" do
@@ -92,7 +92,7 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
 
     # @param image [Array] 3 Channel image where each pixel channels are stored
     # contiguously
-    def assert_garyscale_data(image)
+    def assert_grayscale_data(image)
         image.each_slice(3) { |p| assert_equal 1, p.uniq.size }
     end
 end

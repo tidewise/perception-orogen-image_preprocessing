@@ -122,10 +122,10 @@ end
 # Task to automatically turn an image into grayscale based on its average
 # brightness (value). If the input frame is already in gray, it does nothing (no-op)
 task_context "AutoGrayscaleTask" do
-    # Average bightness below this value will trigger grayscale
+    # Average brightness below this value will trigger grayscale
     property "on_trigger", "uint8_t", 0
 
-    # Average bightness above this value will trigger grayscale off
+    # Average brightness above this value will trigger grayscale off
     property "off_trigger", "uint8_t", 0
 
     input_port "frame", ro_ptr("/base/samples/frame/Frame")

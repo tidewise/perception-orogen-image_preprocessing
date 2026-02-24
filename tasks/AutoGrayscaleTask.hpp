@@ -36,7 +36,7 @@ argument.
 
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> m_frame;
 
-        States evaluate(std::size_t bightness) const;
+        States evaluate(std::size_t brightness) const;
         void updateState(States next_state);
 
     public:
