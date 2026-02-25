@@ -40,14 +40,10 @@ argument.
         void updateState(States next_state);
 
     public:
-        // Computes the frame average brightness
-        // @param frame The evaluated image. It will be converted in place to HSV
+        // Computes the frame average brightness by converting frame to grayscale and
+        // averaging it
         static std::pair<std::uint8_t, cv::Mat> avgBrightness(cv::Mat const& frame,
             base::samples::frame::frame_mode_t mode);
-
-        // Fills all channels from dst with the value channel from hsv. It is assumed
-        // that both Mat have same shape
-        static void grayscaleFromHSV(cv::Mat const& hsv, cv::Mat& dst);
 
         /** TaskContext constructor for AutoGrayscaleTask
          * \param name Name of the task. This name needs to be unique to make it

@@ -9,21 +9,21 @@ using namespace frame_helper;
 using namespace image_preprocessing;
 
 // value channel
-constexpr std::size_t V = 2;
-constexpr uint8_t DEPTH = 3;
+constexpr uint8_t RGB_DEPTH = 3;
+constexpr uint8_t GRAYSCALE_DEPTH = 1;
 
 using MatrixXu8 =
     Eigen::Matrix<std::uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-using Stride = Eigen::Stride<Eigen::Dynamic, 3>;
+using Stride = Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>;
 using MapU8 = Eigen::Map<MatrixXu8, Eigen::Unaligned, Stride>;
 
 // Maps a cv::Mat channel. It only works for CV_8UC3 types!
-MapU8 map(cv::Mat const& frame, std::size_t channel)
+MapU8 map(cv::Mat const& frame, std::size_t channel, uint8_t depth)
 {
     return MapU8(frame.data + channel,
         frame.rows,
         frame.cols,
-        Stride(frame.cols * DEPTH, DEPTH));
+        Stride(frame.cols * depth, depth));
 }
 
 AutoGrayscaleTask::AutoGrayscaleTask(std::string const& name,
@@ -75,12 +75,15 @@ void AutoGrayscaleTask::updateHook()
 
     Frame* frame = m_frame.write_access();
     cv::Mat cv_frame = FrameHelper::convertToCvMat(*frame);
-    auto [brightness, hsv_frame] = avgBrightness(cv_frame, frame->getFrameMode());
+    auto [brightness, gray_frame] = avgBrightness(cv_frame, frame->getFrameMode());
     States next_state = evaluate(brightness);
     if (next_state == GRAYSCALE_ON) {
         // TODO: evaluate grayscale conversions from
         // https://cadik.posvete.cz/color_to_gray_evaluation/cadik08perceptualEvaluation.pdf
-        grayscaleFromHSV(hsv_frame, cv_frame);
+        auto gray_map = map(gray_frame, 0, GRAYSCALE_DEPTH);
+        map(cv_frame, 0, RGB_DEPTH) = gray_map;
+        map(cv_frame, 1, RGB_DEPTH) = gray_map;
+        map(cv_frame, 2, RGB_DEPTH) = gray_map;
         frame->setFrameMode(frame_mode_t::MODE_GRAYSCALE);
     }
 
@@ -103,23 +106,23 @@ void AutoGrayscaleTask::updateState(States next_state)
 std::pair<std::uint8_t, cv::Mat> AutoGrayscaleTask::avgBrightness(cv::Mat const& frame,
     base::samples::frame::frame_mode_t mode)
 {
-    cv::Mat frame_hsv;
+    cv::Mat gray;
     switch (mode) {
         case frame_mode_t::MODE_RGB:
-            cv::cvtColor(frame, frame_hsv, cv::COLOR_RGB2HSV);
+            cv::cvtColor(frame, gray, cv::COLOR_RGB2GRAY, 1);
             break;
         case frame_mode_t::MODE_BGR:
-            cv::cvtColor(frame, frame_hsv, cv::COLOR_BGR2HSV);
+            cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY, 1);
             break;
         default:
             throw std::runtime_error(
                 "frame mode " + std::to_string(mode) + " not supported");
     }
 
-    MapU8 value = map(frame_hsv, V);
-    double avg = value.cast<double>().mean();
+    MapU8 brightness = map(gray, 0, 1);
+    double avg = brightness.cast<double>().mean();
 
-    return {static_cast<std::uint8_t>(avg), frame_hsv};
+    return {static_cast<std::uint8_t>(avg), gray};
 }
 
 AutoGrayscaleTask::States AutoGrayscaleTask::evaluate(std::size_t brightness) const
@@ -133,13 +136,6 @@ AutoGrayscaleTask::States AutoGrayscaleTask::evaluate(std::size_t brightness) co
     }
 
     return state();
-}
-
-void AutoGrayscaleTask::grayscaleFromHSV(cv::Mat const& hsv, cv::Mat& dst)
-{
-    map(dst, 0) = map(hsv, V);
-    map(dst, 1) = map(hsv, V);
-    map(dst, 2) = map(hsv, V);
 }
 
 void AutoGrayscaleTask::errorHook()

@@ -23,8 +23,8 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
             Orocos.load_typekit "base"
         end
 
-        @task.properties.on_trigger = 100
-        @task.properties.off_trigger = 130
+        @task.properties.on_trigger = 90
+        @task.properties.off_trigger = 125
 
         @night_rgb = Types.base.samples.frame.Frame.new
         @day_rgb = Types.base.samples.frame.Frame.new
