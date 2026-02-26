@@ -1,6 +1,8 @@
 name "image_preprocessing"
 version "0.1"
 
+cxx_standard "c++17"
+
 using_library "base-types"
 import_types_from "base"
 using_task_library "transformer"
@@ -115,6 +117,24 @@ task_context "StereoTask" do
     output_port "oframe_pair", ro_ptr("/base/samples/frame/FramePair")
     property("calibration", "/frame_helper/StereoCalibration")
     port_driven "frame_left", "frame_right"
+end
+
+# Task to automatically turn an image into grayscale based on its average
+# brightness (value). If the input frame is already in gray, it does nothing (no-op)
+task_context "AutoGrayscaleTask" do
+    # Average brightness below this value will trigger grayscale
+    property "on_trigger", "uint8_t", 0
+
+    # Average brightness above this value will trigger grayscale off
+    property "off_trigger", "uint8_t", 0
+
+    input_port "frame", ro_ptr("/base/samples/frame/Frame")
+
+    output_port "oframe", ro_ptr("/base/samples/frame/Frame")
+
+    runtime_states :GRAYSCALE_ON, :GRAYSCALE_OFF, :NO_OP
+
+    port_driven
 end
 
 # Declares a deployment, i.e. an actual executable that contains various tasks.
