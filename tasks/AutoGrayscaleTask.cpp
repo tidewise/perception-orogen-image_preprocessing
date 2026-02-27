@@ -27,6 +27,8 @@ bool AutoGrayscaleTask::configureHook()
     if (!AutoGrayscaleTaskBase::configureHook())
         return false;
 
+    m_replicate_input_mode = _replicate_input_mode.get();
+
     m_on_trigger = _on_trigger.get();
     m_off_trigger = _off_trigger.get();
     return true;
@@ -62,8 +64,7 @@ void AutoGrayscaleTask::updateHook()
     if (next_state == GRAYSCALE_ON) {
         // TODO: evaluate grayscale conversions from
         // https://cadik.posvete.cz/color_to_gray_evaluation/cadik08perceptualEvaluation.pdf
-        cv::cvtColor(gray_frame, cv_frame, cv::COLOR_GRAY2RGB);
-        frame->setFrameMode(frame_mode_t::MODE_GRAYSCALE);
+        fillOutputFromGray(*frame, gray_frame);
     }
 
     m_frame.reset(frame);
@@ -99,6 +100,20 @@ std::pair<std::uint8_t, cv::Mat> AutoGrayscaleTask::avgBrightness(cv::Mat const&
     }
 
     return {cv::mean(gray)[0], gray};
+}
+
+void AutoGrayscaleTask::fillOutputFromGray(Frame& output, cv::Mat const& gray) const
+{
+    cv::Mat cv_out = FrameHelper::convertToCvMat(output);
+    if (m_replicate_input_mode) {
+        cv::cvtColor(gray, cv_out, cv::COLOR_GRAY2BGR);
+        return;
+    }
+
+    output.setFrameMode(frame_mode_t::MODE_GRAYSCALE);
+    std::size_t n = output.getPixelSize() * output.getPixelCount();
+    output.image.resize(n);
+    cv_out = gray;
 }
 
 AutoGrayscaleTask::States AutoGrayscaleTask::evaluate(std::size_t brightness) const

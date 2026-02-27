@@ -33,6 +33,7 @@ argument.
     protected:
         std::uint8_t m_on_trigger;
         std::uint8_t m_off_trigger;
+        bool m_replicate_input_mode;
 
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> m_frame;
 
@@ -40,6 +41,8 @@ argument.
         void updateState(States next_state);
 
     public:
+        void fillOutputFromGray(base::samples::frame::Frame& output,
+            cv::Mat const& gray) const;
         // Computes the frame average brightness by converting frame to grayscale and
         // averaging it
         static std::pair<std::uint8_t, cv::Mat> avgBrightness(cv::Mat const& frame,

@@ -128,6 +128,11 @@ task_context "AutoGrayscaleTask" do
     # Average brightness above this value will trigger grayscale off
     property "off_trigger", "uint8_t", 0
 
+    # When true and input is colored and grayscale is applied it will keep the same
+    # input format and repeat grayscale values in all three channels on the output.
+    # When false, image output is set to :MODE_GRAYSCALE
+    property "replicate_input_mode", "/bool", true
+
     input_port "frame", ro_ptr("/base/samples/frame/Frame")
 
     output_port "oframe", ro_ptr("/base/samples/frame/Frame")

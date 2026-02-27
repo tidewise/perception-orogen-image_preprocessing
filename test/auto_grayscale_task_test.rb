@@ -44,7 +44,7 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
             end
 
         assert_in_delta t, out.time, 1e-6
-        assert_equal :MODE_GRAYSCALE, out.frame_mode
+        assert_equal night_rgb.frame_mode, out.frame_mode
         assert_grayscale_data out.image
     end
 
@@ -60,7 +60,7 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
             end
 
         assert_in_delta t, out.time, 1e-6
-        assert_equal :MODE_BGR, out.frame_mode
+        assert_equal day_rgb.frame_mode, out.frame_mode
     end
 
     it "does not evaluate grayscale frames" do
