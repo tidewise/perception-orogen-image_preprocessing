@@ -8,24 +8,6 @@ using namespace base::samples::frame;
 using namespace frame_helper;
 using namespace image_preprocessing;
 
-// value channel
-constexpr uint8_t RGB_DEPTH = 3;
-constexpr uint8_t GRAYSCALE_DEPTH = 1;
-
-using MatrixXu8 =
-    Eigen::Matrix<std::uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-using Stride = Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>;
-using MapU8 = Eigen::Map<MatrixXu8, Eigen::Unaligned, Stride>;
-
-// Maps a cv::Mat channel. It only works for CV_8UC3 types!
-MapU8 map(cv::Mat const& frame, std::size_t channel, uint8_t depth)
-{
-    return MapU8(frame.data + channel,
-        frame.rows,
-        frame.cols,
-        Stride(frame.cols * depth, depth));
-}
-
 AutoGrayscaleTask::AutoGrayscaleTask(std::string const& name,
     TaskCore::TaskState initial_state)
     : AutoGrayscaleTaskBase(name, initial_state)
@@ -80,10 +62,7 @@ void AutoGrayscaleTask::updateHook()
     if (next_state == GRAYSCALE_ON) {
         // TODO: evaluate grayscale conversions from
         // https://cadik.posvete.cz/color_to_gray_evaluation/cadik08perceptualEvaluation.pdf
-        auto gray_map = map(gray_frame, 0, GRAYSCALE_DEPTH);
-        map(cv_frame, 0, RGB_DEPTH) = gray_map;
-        map(cv_frame, 1, RGB_DEPTH) = gray_map;
-        map(cv_frame, 2, RGB_DEPTH) = gray_map;
+        cv::cvtColor(gray_frame, cv_frame, cv::COLOR_GRAY2RGB);
         frame->setFrameMode(frame_mode_t::MODE_GRAYSCALE);
     }
 
@@ -119,10 +98,7 @@ std::pair<std::uint8_t, cv::Mat> AutoGrayscaleTask::avgBrightness(cv::Mat const&
                 "frame mode " + std::to_string(mode) + " not supported");
     }
 
-    MapU8 brightness = map(gray, 0, 1);
-    double avg = brightness.cast<double>().mean();
-
-    return {static_cast<std::uint8_t>(avg), gray};
+    return {cv::mean(gray)[0], gray};
 }
 
 AutoGrayscaleTask::States AutoGrayscaleTask::evaluate(std::size_t brightness) const
