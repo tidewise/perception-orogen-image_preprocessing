@@ -49,7 +49,7 @@ void AutoGrayscaleTask::updateHook()
 {
     AutoGrayscaleTaskBase::updateHook();
 
-    if (_frame.read(m_frame) != RTT::NewData) {
+    if (_frame.read(m_frame, false) != RTT::NewData) {
         return;
     }
 
