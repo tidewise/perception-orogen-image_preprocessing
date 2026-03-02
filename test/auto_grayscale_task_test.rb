@@ -104,6 +104,22 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
             .to_emit(task.grayscale_off_event)
     end
 
+    it "can ouput :MODE_GRAYSCALE" do
+        task.properties.replicate_input_mode = false
+        syskit_configure_and_start(task)
+        night_rgb.time = t = Time.now
+        out =
+            expect_execution do
+                syskit_write task.frame_port, night_rgb
+            end.to do
+              emit task.grayscale_on_event
+              have_one_new_sample task.oframe_port
+            end
+
+        assert_in_delta t, out.time, 1e-6
+        assert_equal :MODE_GRAYSCALE, out.frame_mode
+    end
+
     # @param image [Array] 3 Channel image where each pixel channels are stored
     # contiguously
     def assert_grayscale_data(image)

@@ -152,7 +152,7 @@ void AutoGrayscaleTask::fillOutputFromGray(Frame& output,
     output.setFrameMode(frame_mode_t::MODE_GRAYSCALE);
     std::size_t n = output.getPixelSize() * output.getPixelCount();
     output.image.resize(n);
-    cv_out = gray;
+    std::copy(gray.data, gray.data + n, output.image.begin());
 }
 
 AutoGrayscaleTask::States AutoGrayscaleTask::evaluate(std::size_t brightness) const
