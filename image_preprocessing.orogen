@@ -125,10 +125,10 @@ end
 # brightness (value). If the input frame is already in gray, it does nothing (no-op)
 task_context "AutoGrayscaleTask" do
     # Average brightness below this value will trigger grayscale
-    property "on_trigger", "uint8_t", 0
+    property "on_trigger", "uint8_t", 90
 
     # Average brightness above this value will trigger grayscale off
-    property "off_trigger", "uint8_t", 0
+    property "off_trigger", "uint8_t", 125
 
     # When true and input is colored and grayscale is applied it will keep the same
     # input format and repeat grayscale values in all three channels on the output.
