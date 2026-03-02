@@ -32,6 +32,23 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
         FrameHelper.load_frame File.join(__dir__, "data", "day-rgb.jpg"), @day_rgb
     end
 
+    it "converts image to grayscale in low light with :SUM method" do
+        task.properties.grayscale_method = :SUM
+        syskit_configure_and_start(task)
+        out =
+            expect_execution do
+                syskit_write task.frame_port, night_rgb
+            end.to do
+              emit task.grayscale_on_event
+              have_one_new_sample task.oframe_port
+            end
+
+        assert_grayscale_data out.image
+
+        first_pixel = (night_rgb.image[0] + night_rgb.image[1] + night_rgb.image[2]) % 256
+        assert_equal first_pixel, out.image[0]
+    end
+
     it "converts image to grayscale in low light" do
         syskit_configure_and_start(task)
         night_rgb.time = t = Time.now

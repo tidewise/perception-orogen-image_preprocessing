@@ -8,6 +8,11 @@ using namespace base::samples::frame;
 using namespace frame_helper;
 using namespace image_preprocessing;
 
+constexpr std::size_t RGB_DEPTH = 3;
+using PixelRGB = cv::Point3_<uint8_t>;
+
+void sumGrayscale(cv::Mat const& rgb, cv::Mat& gray);
+
 AutoGrayscaleTask::AutoGrayscaleTask(std::string const& name,
     TaskCore::TaskState initial_state)
     : AutoGrayscaleTaskBase(name, initial_state)
@@ -28,6 +33,7 @@ bool AutoGrayscaleTask::configureHook()
         return false;
 
     m_replicate_input_mode = _replicate_input_mode.get();
+    m_method = _grayscale_method.get();
 
     m_on_trigger = _on_trigger.get();
     m_off_trigger = _off_trigger.get();
@@ -62,9 +68,10 @@ void AutoGrayscaleTask::updateHook()
     auto [brightness, gray_frame] = avgBrightness(cv_frame, frame->getFrameMode());
     States next_state = evaluate(brightness);
     if (next_state == GRAYSCALE_ON) {
-        // TODO: evaluate grayscale conversions from
-        // https://cadik.posvete.cz/color_to_gray_evaluation/cadik08perceptualEvaluation.pdf
-        fillOutputFromGray(*frame, gray_frame);
+        if (m_method != GrayscaleMethod::OPENCV) {
+            convertToGrayscale(cv_frame, gray_frame, m_method);
+        }
+        fillOutputFromGray(*frame, gray_frame, m_replicate_input_mode);
     }
 
     m_frame.reset(frame);
@@ -102,10 +109,42 @@ std::pair<std::uint8_t, cv::Mat> AutoGrayscaleTask::avgBrightness(cv::Mat const&
     return {cv::mean(gray)[0], gray};
 }
 
-void AutoGrayscaleTask::fillOutputFromGray(Frame& output, cv::Mat const& gray) const
+void AutoGrayscaleTask::convertToGrayscale(cv::Mat const& src,
+    cv::Mat& dst,
+    GrayscaleMethod method)
+{
+    if (src.size() != dst.size()) {
+        throw std::runtime_error("src and dst images have mismatching sizes");
+    }
+
+    // TODO: evaluate grayscale conversions from
+    // https://cadik.posvete.cz/color_to_gray_evaluation/cadik08perceptualEvaluation.pdf
+    switch (method) {
+        case GrayscaleMethod::SUM:
+            sumGrayscale(src, dst);
+            break;
+        default:
+            throw std::runtime_error(
+                "grayscale conversion " + std::to_string(method) + " is not supported");
+    }
+}
+
+void sumGrayscale(cv::Mat const& rgb, cv::Mat& gray)
+{
+    for (int i = 0; i < rgb.rows; i++) {
+        for (int j = 0; j < rgb.cols; j++) {
+            PixelRGB const& pixel = rgb.at<PixelRGB>(i, j);
+            gray.at<std::uint8_t>(i, j) = pixel.x + pixel.y + pixel.z;
+        }
+    }
+}
+
+void AutoGrayscaleTask::fillOutputFromGray(Frame& output,
+    cv::Mat const& gray,
+    bool replicate_input_mode)
 {
     cv::Mat cv_out = FrameHelper::convertToCvMat(output);
-    if (m_replicate_input_mode) {
+    if (replicate_input_mode) {
         cv::cvtColor(gray, cv_out, cv::COLOR_GRAY2BGR);
         return;
     }
