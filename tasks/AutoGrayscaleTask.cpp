@@ -134,7 +134,8 @@ void sumGrayscale(cv::Mat const& rgb, cv::Mat& gray)
     for (int i = 0; i < rgb.rows; i++) {
         for (int j = 0; j < rgb.cols; j++) {
             PixelRGB const& pixel = rgb.at<PixelRGB>(i, j);
-            gray.at<std::uint8_t>(i, j) = pixel.x + pixel.y + pixel.z;
+            gray.at<std::uint8_t>(i, j) =
+                std::min<std::uint16_t>(255, pixel.x + pixel.y + pixel.z);
         }
     }
 }
