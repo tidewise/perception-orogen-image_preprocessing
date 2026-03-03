@@ -11,7 +11,7 @@ using namespace image_preprocessing;
 constexpr std::size_t RGB_DEPTH = 3;
 using PixelRGB = cv::Point3_<uint8_t>;
 
-void sumGrayscale(cv::Mat const& rgb, cv::Mat& gray);
+static void sumGrayscale(cv::Mat const& rgb, cv::Mat& gray);
 
 AutoGrayscaleTask::AutoGrayscaleTask(std::string const& name,
     TaskCore::TaskState initial_state)
