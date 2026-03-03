@@ -31,27 +31,31 @@ argument.
         friend class AutoGrayscaleTaskBase;
 
     protected:
+        // being property placeholders
         std::uint8_t m_on_trigger;
         std::uint8_t m_off_trigger;
         bool m_replicate_input_mode;
         GrayscaleMethod m_method;
+        // end property placeholders
 
-        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> m_frame;
+        // buffer that will be reused to store gray frame in the
+        // "common" use case, that is, replicating the input mode
+        std::unique_ptr<base::samples::frame::Frame> m_frame_gray;
+
+        cv::Mat getGrayFrame(base::samples::frame::Frame const& input_frame);
+
+        void writeOFrame(States state,
+            cv::Mat const& cv_gray,
+            base::samples::frame::Frame const& input_frame);
 
         States evaluate(std::size_t brightness) const;
+
         void updateState(States next_state);
 
     public:
-        static void fillOutputFromGray(base::samples::frame::Frame& output,
-            cv::Mat const& gray, bool replicate_input_mode);
-
         static void convertToGrayscale(cv::Mat const& src,
             cv::Mat& dst,
             GrayscaleMethod method);
-        // Computes the frame average brightness by converting frame to grayscale and
-        // averaging it
-        static std::pair<std::uint8_t, cv::Mat> avgBrightness(cv::Mat const& frame,
-            base::samples::frame::frame_mode_t mode);
 
         /** TaskContext constructor for AutoGrayscaleTask
          * \param name Name of the task. This name needs to be unique to make it

@@ -120,6 +120,47 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
         assert_equal :MODE_GRAYSCALE, out.frame_mode
     end
 
+    it "handles different input sizes" do
+        task.properties.replicate_input_mode = true
+        syskit_configure_and_start(task)
+        small = resize(night_rgb, 1.0 / 2)
+        small_out =
+            expect_execution do
+                syskit_write task.frame_port, small
+            end.to do
+                emit task.grayscale_on_event
+                have_one_new_sample task.oframe_port
+            end
+
+        assert_equal 1024, small_out.size.width
+        assert_equal 575, small_out.size.height
+
+        big_out =
+            expect_execution do
+                syskit_write task.frame_port, night_rgb
+            end.to do
+                not_emit task.grayscale_off_event
+                have_one_new_sample task.oframe_port
+            end
+
+        assert_equal 2048, big_out.size.width
+        assert_equal 1150, big_out.size.height
+    end
+
+    def resize(frame, factor)
+        resized = Types.base.samples.frame.Frame.new
+        resized.frame_mode = frame.frame_mode
+        resized.data_depth = frame.data_depth
+        resized.size.width = factor * frame.size.width
+        resized.size.height = factor * frame.size.height
+        resized.pixel_size = frame.pixel_size
+        resized.image = Array.new(
+            resized.size.width * resized.size.height * resized.pixel_size, 0
+        )
+        FrameHelper.convert frame, resized
+        resized
+    end
+
     # @param image [Array] 3 Channel image where each pixel channels are stored
     # contiguously
     def assert_grayscale_data(image)
