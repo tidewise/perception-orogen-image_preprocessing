@@ -8,7 +8,8 @@ using namespace base::samples::frame;
 using namespace frame_helper;
 using namespace image_preprocessing;
 
-using PixelRGB = cv::Point3_<uint8_t>;
+using PixelRGB8 = cv::Point3_<uint8_t>;
+using PixelRGB16 = cv::Point3_<uint16_t>;
 
 static void sumGrayscale(cv::Mat const& rgb, cv::Mat& gray);
 
@@ -150,7 +151,8 @@ void sumGrayscale(cv::Mat const& rgb, cv::Mat& gray)
 {
     for (int i = 0; i < rgb.rows; i++) {
         for (int j = 0; j < rgb.cols; j++) {
-            PixelRGB const& pixel = rgb.at<PixelRGB>(i, j);
+            PixelRGB8 const& p = rgb.at<PixelRGB8>(i, j);
+            PixelRGB16 pixel = p;
             gray.at<std::uint8_t>(i, j) =
                 std::min<std::uint16_t>(255, pixel.x + pixel.y + pixel.z);
         }
