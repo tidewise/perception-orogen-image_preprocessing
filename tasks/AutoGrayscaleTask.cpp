@@ -8,23 +8,10 @@ using namespace base::samples::frame;
 using namespace frame_helper;
 using namespace image_preprocessing;
 
-// value channel
-constexpr uint8_t RGB_DEPTH = 3;
-constexpr uint8_t GRAYSCALE_DEPTH = 1;
+using PixelRGB8 = cv::Point3_<uint8_t>;
+using PixelRGB16 = cv::Point3_<uint16_t>;
 
-using MatrixXu8 =
-    Eigen::Matrix<std::uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-using Stride = Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>;
-using MapU8 = Eigen::Map<MatrixXu8, Eigen::Unaligned, Stride>;
-
-// Maps a cv::Mat channel. It only works for CV_8UC3 types!
-MapU8 map(cv::Mat const& frame, std::size_t channel, uint8_t depth)
-{
-    return MapU8(frame.data + channel,
-        frame.rows,
-        frame.cols,
-        Stride(frame.cols * depth, depth));
-}
+static void sumGrayscale(cv::Mat const& rgb, cv::Mat& gray);
 
 AutoGrayscaleTask::AutoGrayscaleTask(std::string const& name,
     TaskCore::TaskState initial_state)
@@ -45,8 +32,14 @@ bool AutoGrayscaleTask::configureHook()
     if (!AutoGrayscaleTaskBase::configureHook())
         return false;
 
+    m_frame_gray = std::make_unique<Frame>();
+
+    m_replicate_input_mode = _replicate_input_mode.get();
+    m_method = _grayscale_method.get();
+
     m_on_trigger = _on_trigger.get();
     m_off_trigger = _off_trigger.get();
+
     return true;
 }
 bool AutoGrayscaleTask::startHook()
@@ -59,37 +52,68 @@ void AutoGrayscaleTask::updateHook()
 {
     AutoGrayscaleTaskBase::updateHook();
 
-    if (_frame.read(m_frame) != RTT::NewData) {
+    RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> frame;
+    if (_frame.read(frame, false) != RTT::NewData) {
         return;
     }
 
-    if (m_frame->isGrayscale()) {
-        _oframe.write(m_frame);
+    if (frame->isGrayscale()) {
+        _oframe.write(frame);
         updateState(States::NO_OP);
         return;
     }
 
-    if (FrameHelper::getOpenCvType(*m_frame) != CV_8UC3) {
-        throw std::runtime_error("only 3 one-byte channel images are supported");
+    if (FrameHelper::getOpenCvType(*frame) != CV_8UC3) {
+        throw std::runtime_error("only 3-one-byte channel images are supported");
     }
 
-    Frame* frame = m_frame.write_access();
-    cv::Mat cv_frame = FrameHelper::convertToCvMat(*frame);
-    auto [brightness, gray_frame] = avgBrightness(cv_frame, frame->getFrameMode());
+    cv::Mat cv_gray = getGrayFrame(*frame);
+    std::uint8_t brightness = cv::mean(cv_gray)[0];
+
     States next_state = evaluate(brightness);
-    if (next_state == GRAYSCALE_ON) {
-        // TODO: evaluate grayscale conversions from
-        // https://cadik.posvete.cz/color_to_gray_evaluation/cadik08perceptualEvaluation.pdf
-        auto gray_map = map(gray_frame, 0, GRAYSCALE_DEPTH);
-        map(cv_frame, 0, RGB_DEPTH) = gray_map;
-        map(cv_frame, 1, RGB_DEPTH) = gray_map;
-        map(cv_frame, 2, RGB_DEPTH) = gray_map;
-        frame->setFrameMode(frame_mode_t::MODE_GRAYSCALE);
+
+    if (next_state != GRAYSCALE_ON) {
+        _oframe.write(frame);
+        updateState(next_state);
+        return;
     }
 
-    m_frame.reset(frame);
-    _oframe.write(m_frame);
+    if (m_method != GrayscaleMethod::OPENCV) {
+        cv::Mat cv_frame = FrameHelper::convertToCvMat(*frame);
+        convertToGrayscale(cv_frame, cv_gray, m_method);
+    }
+    writeOFrame(next_state, cv_gray, *frame);
     updateState(next_state);
+}
+
+cv::Mat AutoGrayscaleTask::getGrayFrame(Frame const& input_frame)
+{
+    if (!m_frame_gray) {
+        m_frame_gray = std::make_unique<Frame>();
+    }
+
+    auto size = input_frame.getSize();
+    if (!m_frame_gray->isGrayscale() || m_frame_gray->getSize() != size) {
+        m_frame_gray->setFrameMode(frame_mode_t::MODE_GRAYSCALE);
+        m_frame_gray->init(size.width, size.height, 8, frame_mode_t::MODE_GRAYSCALE, -1);
+    }
+    cv::Mat gray = FrameHelper::convertToCvMat(*m_frame_gray);
+    cv::Mat input_cv = FrameHelper::convertToCvMat(input_frame);
+
+    auto mode = input_frame.getFrameMode();
+    switch (mode) {
+        case frame_mode_t::MODE_RGB:
+            cv::cvtColor(input_cv, gray, cv::COLOR_RGB2GRAY, 1);
+            break;
+        case frame_mode_t::MODE_BGR:
+            cv::cvtColor(input_cv, gray, cv::COLOR_BGR2GRAY, 1);
+            break;
+        default:
+            throw std::runtime_error(
+                "frame mode " + std::to_string(mode) + " not supported");
+    }
+
+    return gray;
 }
 
 void AutoGrayscaleTask::updateState(States next_state)
@@ -103,26 +127,55 @@ void AutoGrayscaleTask::updateState(States next_state)
     }
 }
 
-std::pair<std::uint8_t, cv::Mat> AutoGrayscaleTask::avgBrightness(cv::Mat const& frame,
-    base::samples::frame::frame_mode_t mode)
+void AutoGrayscaleTask::convertToGrayscale(cv::Mat const& src,
+    cv::Mat& dst,
+    GrayscaleMethod method)
 {
-    cv::Mat gray;
-    switch (mode) {
-        case frame_mode_t::MODE_RGB:
-            cv::cvtColor(frame, gray, cv::COLOR_RGB2GRAY, 1);
-            break;
-        case frame_mode_t::MODE_BGR:
-            cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY, 1);
+    if (src.size() != dst.size()) {
+        throw std::runtime_error("src and dst images have mismatching sizes");
+    }
+
+    // TODO: evaluate grayscale conversions from
+    // https://cadik.posvete.cz/color_to_gray_evaluation/cadik08perceptualEvaluation.pdf
+    switch (method) {
+        case GrayscaleMethod::SUM:
+            sumGrayscale(src, dst);
             break;
         default:
             throw std::runtime_error(
-                "frame mode " + std::to_string(mode) + " not supported");
+                "grayscale conversion " + std::to_string(method) + " is not supported");
+    }
+}
+
+void sumGrayscale(cv::Mat const& rgb, cv::Mat& gray)
+{
+    for (int i = 0; i < rgb.rows; i++) {
+        for (int j = 0; j < rgb.cols; j++) {
+            PixelRGB8 const& p = rgb.at<PixelRGB8>(i, j);
+            PixelRGB16 pixel = p;
+            gray.at<std::uint8_t>(i, j) =
+                std::min<std::uint16_t>(255, pixel.x + pixel.y + pixel.z);
+        }
+    }
+}
+
+void AutoGrayscaleTask::writeOFrame(States state,
+    cv::Mat const& cv_gray,
+    Frame const& input_frame)
+{
+    if (!m_replicate_input_mode) {
+        m_frame_gray->time = input_frame.time;
+        m_frame_gray->received_time = input_frame.time;
+        _oframe.write(m_frame_gray.release());
+        return;
     }
 
-    MapU8 brightness = map(gray, 0, 1);
-    double avg = brightness.cast<double>().mean();
+    std::unique_ptr<Frame> out_frame = std::make_unique<Frame>();
+    out_frame->init(input_frame, false);
+    cv::Mat cv_out = FrameHelper::convertToCvMat(*out_frame);
 
-    return {static_cast<std::uint8_t>(avg), gray};
+    cv::cvtColor(cv_gray, cv_out, cv::COLOR_GRAY2BGR);
+    _oframe.write(out_frame.release());
 }
 
 AutoGrayscaleTask::States AutoGrayscaleTask::evaluate(std::size_t brightness) const

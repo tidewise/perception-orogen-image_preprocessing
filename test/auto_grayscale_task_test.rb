@@ -23,13 +23,27 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
             Orocos.load_typekit "base"
         end
 
-        @task.properties.on_trigger = 90
-        @task.properties.off_trigger = 125
-
         @night_rgb = Types.base.samples.frame.Frame.new
         @day_rgb = Types.base.samples.frame.Frame.new
         FrameHelper.load_frame File.join(__dir__, "data", "night-rgb.jpg"), @night_rgb
         FrameHelper.load_frame File.join(__dir__, "data", "day-rgb.jpg"), @day_rgb
+    end
+
+    it "converts image to grayscale in low light with :SUM method" do
+        task.properties.grayscale_method = :SUM
+        syskit_configure_and_start(task)
+        out =
+            expect_execution do
+                syskit_write task.frame_port, night_rgb
+            end.to do
+              emit task.grayscale_on_event
+              have_one_new_sample task.oframe_port
+            end
+
+        assert_grayscale_data out.image
+
+        first_pixel = (night_rgb.image[0] + night_rgb.image[1] + night_rgb.image[2]) % 256
+        assert_equal first_pixel, out.image[0]
     end
 
     it "converts image to grayscale in low light" do
@@ -44,7 +58,7 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
             end
 
         assert_in_delta t, out.time, 1e-6
-        assert_equal :MODE_GRAYSCALE, out.frame_mode
+        assert_equal night_rgb.frame_mode, out.frame_mode
         assert_grayscale_data out.image
     end
 
@@ -60,7 +74,7 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
             end
 
         assert_in_delta t, out.time, 1e-6
-        assert_equal :MODE_BGR, out.frame_mode
+        assert_equal day_rgb.frame_mode, out.frame_mode
     end
 
     it "does not evaluate grayscale frames" do
@@ -88,6 +102,63 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
             .to_emit(task.grayscale_on_event)
         expect_execution { syskit_write task.frame_port, day_rgb }
             .to_emit(task.grayscale_off_event)
+    end
+
+    it "can ouput :MODE_GRAYSCALE" do
+        task.properties.replicate_input_mode = false
+        syskit_configure_and_start(task)
+        night_rgb.time = t = Time.now
+        out =
+            expect_execution do
+                syskit_write task.frame_port, night_rgb
+            end.to do
+              emit task.grayscale_on_event
+              have_one_new_sample task.oframe_port
+            end
+
+        assert_in_delta t, out.time, 1e-6
+        assert_equal :MODE_GRAYSCALE, out.frame_mode
+    end
+
+    it "handles different input sizes" do
+        task.properties.replicate_input_mode = true
+        syskit_configure_and_start(task)
+        small = resize(night_rgb, 1.0 / 2)
+        small_out =
+            expect_execution do
+                syskit_write task.frame_port, small
+            end.to do
+                emit task.grayscale_on_event
+                have_one_new_sample task.oframe_port
+            end
+
+        assert_equal 1024, small_out.size.width
+        assert_equal 575, small_out.size.height
+
+        big_out =
+            expect_execution do
+                syskit_write task.frame_port, night_rgb
+            end.to do
+                not_emit task.grayscale_off_event
+                have_one_new_sample task.oframe_port
+            end
+
+        assert_equal 2048, big_out.size.width
+        assert_equal 1150, big_out.size.height
+    end
+
+    def resize(frame, factor)
+        resized = Types.base.samples.frame.Frame.new
+        resized.frame_mode = frame.frame_mode
+        resized.data_depth = frame.data_depth
+        resized.size.width = factor * frame.size.width
+        resized.size.height = factor * frame.size.height
+        resized.pixel_size = frame.pixel_size
+        resized.image = Array.new(
+            resized.size.width * resized.size.height * resized.pixel_size, 0
+        )
+        FrameHelper.convert frame, resized
+        resized
     end
 
     # @param image [Array] 3 Channel image where each pixel channels are stored
