@@ -40,13 +40,14 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
               have_one_new_sample task.oframe_port
             end
 
-        assert_grayscale_data out.image
-
-        first_pixel = (night_rgb.image[0] + night_rgb.image[1] + night_rgb.image[2]) % 256
-        assert_equal first_pixel, out.image[0]
+        night_gray_sum = Types.base.samples.frame.Frame.new
+        FrameHelper.load_frame File.join(__dir__, "data", "night-gray-sum.png"),
+                               night_gray_sum
+        assert_equal night_gray_sum, out
     end
 
     it "converts image to grayscale in low light" do
+        task.properties.grayscale_method = :OPENCV
         syskit_configure_and_start(task)
         night_rgb.time = t = Time.now
         out =
@@ -57,9 +58,13 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
               have_one_new_sample task.oframe_port
             end
 
+        night_gray_opencv = Types.base.samples.frame.Frame.new
+        FrameHelper.load_frame File.join(__dir__, "data", "night-gray-opencv.png"),
+                               night_gray_opencv
+        night_gray_opencv.time = t
+        assert_equal night_gray_opencv, out
         assert_in_delta t, out.time, 1e-6
         assert_equal night_rgb.frame_mode, out.frame_mode
-        assert_grayscale_data out.image
     end
 
     it "does not convert to grayscale in day light" do
@@ -132,8 +137,8 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
                 have_one_new_sample task.oframe_port
             end
 
-        assert_equal 1024, small_out.size.width
-        assert_equal 575, small_out.size.height
+        assert_equal 205, small_out.size.width
+        assert_equal 115, small_out.size.height
 
         big_out =
             expect_execution do
@@ -143,8 +148,8 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
                 have_one_new_sample task.oframe_port
             end
 
-        assert_equal 2048, big_out.size.width
-        assert_equal 1150, big_out.size.height
+        assert_equal 410, big_out.size.width
+        assert_equal 230, big_out.size.height
     end
 
     def resize(frame, factor)
@@ -159,11 +164,5 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
         )
         FrameHelper.convert frame, resized
         resized
-    end
-
-    # @param image [Array] 3 Channel image where each pixel channels are stored
-    # contiguously
-    def assert_grayscale_data(image)
-        image.each_slice(3) { |p| assert_equal 1, p.uniq.size }
     end
 end
