@@ -109,7 +109,7 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
             .to_emit(task.grayscale_off_event)
     end
 
-    it "can ouput :MODE_GRAYSCALE" do
+    it "can output :MODE_GRAYSCALE" do
         task.properties.replicate_input_mode = false
         syskit_configure_and_start(task)
         night_rgb.time = t = Time.now

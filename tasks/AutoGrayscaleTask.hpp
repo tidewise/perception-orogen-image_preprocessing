@@ -45,7 +45,7 @@ argument.
 
         cv::Mat getGrayFrame(base::samples::frame::Frame const& input_frame);
 
-        /** Overrides @param gray image with colored pixels withing @param color_bands
+        /** Overrides @param gray image with colored pixels within @param color_bands
          * from @param source
          */
         void overrideWithColors(base::samples::frame::Frame const& source,
