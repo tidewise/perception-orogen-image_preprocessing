@@ -40,6 +40,20 @@ bool AutoGrayscaleTask::configureHook()
     m_on_trigger = _on_trigger.get();
     m_off_trigger = _off_trigger.get();
 
+    m_color_pass_band = _color_pass_band.get();
+    bool valid_color_pass_band = std::all_of(m_color_pass_band.begin(),
+        m_color_pass_band.end(),
+        [](Range3U8 const& range) { return range.valid(); });
+
+    if (!valid_color_pass_band) {
+        throw std::invalid_argument("invalid color pass band");
+    }
+
+    if (!m_color_pass_band.empty() && !m_replicate_input_mode) {
+        throw std::invalid_argument("color pass band is only valid when "
+                                    "replicate_input_mode is true");
+    }
+
     return true;
 }
 bool AutoGrayscaleTask::startHook()
@@ -74,15 +88,24 @@ void AutoGrayscaleTask::updateHook()
 
     if (next_state != GRAYSCALE_ON) {
         _oframe.write(frame);
-        updateState(next_state);
-        return;
+        return updateState(next_state);
     }
 
     if (m_method != GrayscaleMethod::OPENCV) {
         cv::Mat cv_frame = FrameHelper::convertToCvMat(*frame);
         convertToGrayscale(cv_frame, cv_gray, m_method);
     }
-    writeOFrame(next_state, cv_gray, *frame);
+
+    if (!m_replicate_input_mode) {
+        m_frame_gray->received_time = m_frame_gray->time = frame->time;
+        _oframe.write(m_frame_gray.release());
+        return updateState(next_state);
+    }
+
+    std::unique_ptr<Frame> gray3 = augmentChannels(cv_gray, *frame);
+    cv::Mat cv_gray3{FrameHelper::convertToCvMat(*gray3)};
+    overrideWithColors(*frame, cv_gray3);
+    _oframe.write(gray3.release());
     updateState(next_state);
 }
 
@@ -159,23 +182,97 @@ void sumGrayscale(cv::Mat const& rgb, cv::Mat& gray)
     }
 }
 
-void AutoGrayscaleTask::writeOFrame(States state,
-    cv::Mat const& cv_gray,
-    Frame const& input_frame)
+std::unique_ptr<Frame> AutoGrayscaleTask::augmentChannels(cv::Mat const& gray,
+    Frame const& example)
 {
-    if (!m_replicate_input_mode) {
-        m_frame_gray->time = input_frame.time;
-        m_frame_gray->received_time = input_frame.time;
-        _oframe.write(m_frame_gray.release());
+    std::unique_ptr<Frame> augmented = std::make_unique<Frame>();
+    augmented->init(example, false);
+    cv::Mat cv_augmented = FrameHelper::convertToCvMat(*augmented);
+    cv::cvtColor(gray, cv_augmented, cv::COLOR_GRAY2BGR);
+
+    return augmented;
+}
+
+void AutoGrayscaleTask::overrideWithColors(Frame const& source, cv::Mat& gray) const
+{
+    if (m_color_pass_band.empty()) {
         return;
     }
 
-    std::unique_ptr<Frame> out_frame = std::make_unique<Frame>();
-    out_frame->init(input_frame, false);
-    cv::Mat cv_out = FrameHelper::convertToCvMat(*out_frame);
+    const cv::Mat cv_source = FrameHelper::convertToCvMat(source);
+    const cv::Mat cv_hsv = toHSV(cv_source, source.frame_mode);
 
-    cv::cvtColor(cv_gray, cv_out, cv::COLOR_GRAY2BGR);
-    _oframe.write(out_frame.release());
+    cv::Mat mask(cv::Mat::zeros(cv_hsv.size(), CV_8UC1));
+    cv::Mat scratchpad_mask;
+    for (auto const& band : m_color_pass_band) {
+        cv::inRange(cv_hsv, band.min, band.max, scratchpad_mask);
+        cv::bitwise_or(mask, scratchpad_mask, mask);
+    }
+
+    std::vector<cv::Point> idx;
+    cv::findNonZero(mask, idx);
+    for (auto const& id : idx) {
+        gray.at<cv::Vec3b>(id) =
+            computeColoredPixel(cv_source, source.frame_mode, cv_hsv, id);
+    }
+}
+
+cv::Mat AutoGrayscaleTask::toHSV(cv::Mat const& image, frame_mode_t mode)
+{
+    cv::Mat cv_hsv;
+    switch (mode) {
+        case frame_mode_t::MODE_RGB:
+            cv::cvtColor(image, cv_hsv, cv::COLOR_RGB2HSV);
+            break;
+        case frame_mode_t::MODE_BGR:
+            cv::cvtColor(image, cv_hsv, cv::COLOR_BGR2HSV);
+            break;
+        default:
+            throw std::runtime_error(
+                "hsv conversion " + std::to_string(mode) + " is not supported");
+    }
+
+    return cv_hsv;
+}
+
+cv::Vec3b AutoGrayscaleTask::computeColoredPixel(cv::Mat const& original,
+    base::samples::frame::frame_mode_t original_mode,
+    cv::Mat const& hsv,
+    cv::Point const& pixel_pos) const
+{
+    cv::Mat pixel_hsv(1, 1, CV_8UC3, hsv.at<cv::Vec3b>(pixel_pos));
+    cv::Mat pixel_rgb(1, 1, CV_8UC3);
+
+    switch (m_method) {
+        case (SUM):
+            // Uses gray pixel "brightness" as hsv value. If the plain values were taken,
+            // while in SUM mode the lights would might become less bright than the
+            // surrounding pixels
+            pixel_hsv.at<cv::Vec3b>(0, 0)[2] =
+                m_frame_gray->at<uint8_t>(pixel_pos.x, pixel_pos.y);
+            return fromHSV(pixel_hsv, original_mode).at<cv::Vec3b>(0, 0);
+        default:
+            return original.at<cv::Vec3b>(pixel_pos);
+    }
+}
+
+cv::Mat AutoGrayscaleTask::fromHSV(cv::Mat const& image,
+    base::samples::frame::frame_mode_t mode)
+{
+    cv::Mat rgb;
+    switch (mode) {
+        case (frame_mode_t::MODE_RGB):
+            cv::cvtColor(image, rgb, cv::COLOR_HSV2RGB);
+            break;
+        case (frame_mode_t::MODE_BGR):
+            cv::cvtColor(image, rgb, cv::COLOR_HSV2BGR);
+            break;
+        default:
+            throw std::runtime_error(
+                std::to_string(mode) + " conversion to hsv is not supported");
+    }
+
+    return rgb;
 }
 
 AutoGrayscaleTask::States AutoGrayscaleTask::evaluate(std::size_t brightness) const

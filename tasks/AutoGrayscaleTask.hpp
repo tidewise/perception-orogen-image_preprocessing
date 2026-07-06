@@ -36,6 +36,7 @@ argument.
         std::uint8_t m_off_trigger;
         bool m_replicate_input_mode;
         GrayscaleMethod m_method;
+        std::vector<Range3U8> m_color_pass_band;
         // end property placeholders
 
         // buffer that will be reused to store gray frame in the
@@ -44,9 +45,11 @@ argument.
 
         cv::Mat getGrayFrame(base::samples::frame::Frame const& input_frame);
 
-        void writeOFrame(States state,
-            cv::Mat const& cv_gray,
-            base::samples::frame::Frame const& input_frame);
+        /** Overrides @param gray image with colored pixels withing @param color_bands
+         * from @param source
+         */
+        void overrideWithColors(base::samples::frame::Frame const& source,
+            cv::Mat& gray) const;
 
         States evaluate(std::size_t brightness) const;
 
@@ -56,6 +59,26 @@ argument.
         static void convertToGrayscale(cv::Mat const& src,
             cv::Mat& dst,
             GrayscaleMethod method);
+
+        /** Produces a multichannel Frame as @param example with @param gray data
+         * replicated in all channels
+         */
+        static std::unique_ptr<base::samples::frame::Frame> augmentChannels(
+            cv::Mat const& gray,
+            base::samples::frame::Frame const& example);
+
+        static cv::Mat toHSV(cv::Mat const& image,
+            base::samples::frame::frame_mode_t mode);
+
+        static cv::Mat fromHSV(cv::Mat const& image,
+            base::samples::frame::frame_mode_t mode);
+
+        /** Rules for computing pixel color when color pass band is enabled
+         */
+        cv::Vec3b computeColoredPixel(cv::Mat const& original,
+            base::samples::frame::frame_mode_t original_mode,
+            cv::Mat const& hsv,
+            cv::Point const& pixel_pos) const;
 
         /** TaskContext constructor for AutoGrayscaleTask
          * \param name Name of the task. This name needs to be unique to make it

@@ -152,6 +152,68 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
         assert_equal 230, big_out.size.height
     end
 
+    describe "color band pass" do
+        attr_reader :night_sailboats_rgb
+        before do
+            @night_sailboats_rgb = Types.base.samples.frame.Frame.new
+            FrameHelper.load_frame File.join(__dir__, "data", "night-sailboats-rgb.jpg"),
+                                   night_sailboats_rgb
+
+            red = Types.image_preprocessing.Range3U8.new(
+                min: [126, 74, 73],
+                max: [178, 236, 205]
+            )
+            green = Types.image_preprocessing.Range3U8.new(
+                min: [78, 79, 107],
+                max: [84, 219, 255]
+            )
+
+            task.properties.color_pass_band = [red, green]
+        end
+
+        it "lets configured color pass bands with :SUM method" do
+            task.properties.grayscale_method = :SUM
+            syskit_configure_and_start(task)
+            night_sailboats_rgb.time = t = Time.now
+            out =
+                expect_execution do
+                    syskit_write task.frame_port, night_sailboats_rgb
+                end.to do
+                emit task.grayscale_on_event
+                have_one_new_sample task.oframe_port
+                end
+
+            sailboats_sum = Types.base.samples.frame.Frame.new
+            expected_image_path =
+                File.join(__dir__, "data", "night-sailboats-gray-sum.png")
+            FrameHelper.load_frame expected_image_path, sailboats_sum
+
+            sailboats_sum.time = t
+            assert_equal sailboats_sum, out
+        end
+
+        it "lets configured color pass bands with :OPENCV method" do
+            task.properties.grayscale_method = :OPENCV
+            syskit_configure_and_start(task)
+            night_sailboats_rgb.time = t = Time.now
+            out =
+                expect_execution do
+                    syskit_write task.frame_port, night_sailboats_rgb
+                end.to do
+                emit task.grayscale_on_event
+                have_one_new_sample task.oframe_port
+                end
+
+            sailboats_opencv = Types.base.samples.frame.Frame.new
+            expected_image_path =
+                File.join(__dir__, "data", "night-sailboats-gray-opencv.png")
+            FrameHelper.load_frame expected_image_path, sailboats_opencv
+
+            sailboats_opencv.time = t
+            assert_equal sailboats_opencv, out
+        end
+    end
+
     def resize(frame, factor)
         resized = Types.base.samples.frame.Frame.new
         resized.frame_mode = frame.frame_mode
