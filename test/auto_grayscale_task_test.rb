@@ -171,6 +171,13 @@ describe OroGen.image_preprocessing.AutoGrayscaleTask do
             task.properties.color_pass_band = [red, green]
         end
 
+        it "validates color_pass_band property" do
+            task.properties.color_pass_band[1].max[2] = 106
+            assert_raises(Roby::EmissionFailed) do
+                syskit_configure(task)
+            end
+        end
+
         it "lets configured color pass bands with :SUM method" do
             task.properties.grayscale_method = :SUM
             syskit_configure_and_start(task)
