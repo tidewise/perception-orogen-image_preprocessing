@@ -193,46 +193,43 @@ std::unique_ptr<Frame> AutoGrayscaleTask::augmentChannels(cv::Mat const& gray,
     return augmented;
 }
 
-void AutoGrayscaleTask::overrideWithColors(Frame const& source, cv::Mat& gray) const
+void AutoGrayscaleTask::overrideWithColors(Frame const& source, cv::Mat& gray)
 {
     if (m_color_pass_band.empty()) {
         return;
     }
 
     const cv::Mat cv_source = FrameHelper::convertToCvMat(source);
-    const cv::Mat cv_hsv = toHSV(cv_source, source.frame_mode);
+    toHSV(cv_source, source.frame_mode, m_hsv);
 
-    cv::Mat mask(cv::Mat::zeros(cv_hsv.size(), CV_8UC1));
-    cv::Mat scratchpad_mask;
+    m_color_mask.create(m_hsv.size(), CV_8UC1);
+    m_color_mask = 0;
     for (auto const& band : m_color_pass_band) {
-        cv::inRange(cv_hsv, band.min, band.max, scratchpad_mask);
-        cv::bitwise_or(mask, scratchpad_mask, mask);
+        cv::inRange(m_hsv, band.min, band.max, m_aux_color_mask);
+        cv::bitwise_or(m_color_mask, m_aux_color_mask, m_color_mask);
     }
 
     std::vector<cv::Point> idx;
-    cv::findNonZero(mask, idx);
+    cv::findNonZero(m_color_mask, idx);
     for (auto const& id : idx) {
         gray.at<cv::Vec3b>(id) =
-            computeColoredPixel(cv_source, source.frame_mode, cv_hsv, id);
+            computeColoredPixel(cv_source, source.frame_mode, m_hsv, id);
     }
 }
 
-cv::Mat AutoGrayscaleTask::toHSV(cv::Mat const& image, frame_mode_t mode)
+void AutoGrayscaleTask::toHSV(cv::Mat const& image, frame_mode_t mode, cv::Mat& hsv_out)
 {
-    cv::Mat cv_hsv;
     switch (mode) {
         case frame_mode_t::MODE_RGB:
-            cv::cvtColor(image, cv_hsv, cv::COLOR_RGB2HSV);
+            cv::cvtColor(image, hsv_out, cv::COLOR_RGB2HSV);
             break;
         case frame_mode_t::MODE_BGR:
-            cv::cvtColor(image, cv_hsv, cv::COLOR_BGR2HSV);
+            cv::cvtColor(image, hsv_out, cv::COLOR_BGR2HSV);
             break;
         default:
             throw std::runtime_error(
                 "hsv conversion " + std::to_string(mode) + " is not supported");
     }
-
-    return cv_hsv;
 }
 
 cv::Vec3b AutoGrayscaleTask::computeColoredPixel(cv::Mat const& original,

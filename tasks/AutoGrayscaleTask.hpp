@@ -39,17 +39,22 @@ argument.
         std::vector<Range3U8> m_color_pass_band;
         // end property placeholders
 
-        // buffer that will be reused to store gray frame in the
-        // "common" use case, that is, replicating the input mode
+        // BEGIN BUFFERS
+        /** buffer that will be reused to store gray frame in the
+         * "common" use case, that is, replicating the input mode
+         */
         std::unique_ptr<base::samples::frame::Frame> m_frame_gray;
+        cv::Mat m_color_mask;
+        cv::Mat m_aux_color_mask;
+        cv::Mat m_hsv;
+        // END BUFFERS
 
         cv::Mat getGrayFrame(base::samples::frame::Frame const& input_frame);
 
         /** Overrides @param gray image with colored pixels within @param color_bands
          * from @param source
          */
-        void overrideWithColors(base::samples::frame::Frame const& source,
-            cv::Mat& gray) const;
+        void overrideWithColors(base::samples::frame::Frame const& source, cv::Mat& gray);
 
         States evaluate(std::size_t brightness) const;
 
@@ -70,8 +75,9 @@ argument.
             cv::Mat const& gray,
             base::samples::frame::Frame const& example);
 
-        static cv::Mat toHSV(cv::Mat const& image,
-            base::samples::frame::frame_mode_t mode);
+        static void toHSV(cv::Mat const& image,
+            base::samples::frame::frame_mode_t mode,
+            cv::Mat& hsv_out);
 
         static cv::Mat fromHSV(cv::Mat const& image,
             base::samples::frame::frame_mode_t mode);
