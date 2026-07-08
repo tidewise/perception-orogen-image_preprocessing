@@ -56,7 +56,10 @@ argument.
         void updateState(States next_state);
 
     public:
-        static void convertToGrayscale(cv::Mat const& src,
+        /** Computes the grayscale image output based on @param method when it is
+         * different from OPENCV
+         */
+        static void computeGrayscale(cv::Mat const& src,
             cv::Mat& dst,
             GrayscaleMethod method);
 

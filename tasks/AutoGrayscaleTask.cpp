@@ -93,7 +93,7 @@ void AutoGrayscaleTask::updateHook()
 
     if (m_method != GrayscaleMethod::OPENCV) {
         cv::Mat cv_frame = FrameHelper::convertToCvMat(*frame);
-        convertToGrayscale(cv_frame, cv_gray, m_method);
+        computeGrayscale(cv_frame, cv_gray, m_method);
     }
 
     if (!m_replicate_input_mode) {
@@ -150,7 +150,7 @@ void AutoGrayscaleTask::updateState(States next_state)
     }
 }
 
-void AutoGrayscaleTask::convertToGrayscale(cv::Mat const& src,
+void AutoGrayscaleTask::computeGrayscale(cv::Mat const& src,
     cv::Mat& dst,
     GrayscaleMethod method)
 {
